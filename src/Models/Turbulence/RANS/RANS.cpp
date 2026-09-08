@@ -126,7 +126,7 @@ Scalar RANS::inletK
 
 Scalar RANS::boundaryTurbulentViscosity(const Face& face) const
 {
-    const BoundaryPatch& patch = face.patch()->get();
+    const BoundaryPatch& patch = *face.patch();
 
     if (bcManager_.boundaryType(patch.name(), Field::nut).isWallModelled())
     {
@@ -253,7 +253,7 @@ void RANS::updateWallDistance()
     {
         if (!face.isBoundary()) continue;
 
-        const BoundaryPatch& patch = face.patch()->get();
+        const BoundaryPatch& patch = *face.patch();
 
         if (patch.type() != PatchType::wall) continue;
 
@@ -370,7 +370,7 @@ void RANS::initializeWallFunctionGeometry
         const auto& face = mesh_.faces()[faceIdx];
         if (!face.isBoundary()) continue;
 
-        const BoundaryPatch& patch = face.patch()->get();
+        const BoundaryPatch& patch = *face.patch();
         if (patch.type() != PatchType::wall) continue;
 
         const BoundaryType& bc =
@@ -423,7 +423,7 @@ void RANS::initializeWallFunctionGeometry
             const auto& face = mesh_.faces()[faceIdx];
             if (!face.isBoundary()) continue;
             
-            if (face.patch()->get().type() == PatchType::wall)
+            if (face.patch()->type() == PatchType::wall)
             {
                 totalPolyWallArea[cellIdx] += face.projectedArea();
             }

@@ -33,7 +33,6 @@
 // Project headers
 #include "Scalar.h"
 #include "Vector.h"
-#include "OptionalRef.h"
 #include "BoundaryPatch.h"
 #include "MeshContainers.h"
 #include "Integer.h"
@@ -57,10 +56,6 @@ struct FaceIntegrals
 class Face
 {
 public:
-
-    using OptionalIndex = std::optional<Index>;
-    using OptionalScalar = std::optional<Scalar>;
-    using OptionalVector = std::optional<Vector>;
 
 // ************************* Special Member Functions *************************
 
@@ -137,7 +132,7 @@ public:
     /// Set the boundary patch this face belongs to
     void setPatch(const BoundaryPatch& p) noexcept
     {
-        patch_ = std::cref(p);
+        patch_ = &p;
     }
 
 // ***************************** Accessor Methods *****************************
@@ -161,7 +156,7 @@ public:
     }
 
     /// Get neighbor cell index
-    [[nodiscard]] const OptionalIndex& neighborCell() const noexcept
+    [[nodiscard]] const std::optional<Index>& neighborCell() const noexcept
     {
         return neighborCell_;
     }
@@ -197,7 +192,7 @@ public:
     }
 
     /// Get neighbor cell distance vector
-    [[nodiscard]] const OptionalVector& dNf() const noexcept
+    [[nodiscard]] const std::optional<Vector>& dNf() const noexcept
     {
         return dNf_;
     }
@@ -209,13 +204,13 @@ public:
     }
 
     /// Get neighbor cell distance magnitude
-    [[nodiscard]] const OptionalScalar& dNfMag() const noexcept
+    [[nodiscard]] const std::optional<Scalar>& dNfMag() const noexcept
     {
         return dNfMag_;
     }
 
     /// Get the boundary patch this face belongs to
-    [[nodiscard]] const OptionalRef<BoundaryPatch>& patch() const noexcept
+    [[nodiscard]] const BoundaryPatch* patch() const noexcept
     {
         return patch_;
     }
@@ -251,7 +246,7 @@ private:
     Index ownerCell_ = 0;
 
     /// Index of neighbor cell (nullopt for boundary faces)
-    OptionalIndex neighborCell_;
+    std::optional<Index> neighborCell_;
 
     /// Face geometric centroid
     Vector centroid_;
@@ -269,14 +264,14 @@ private:
     Vector dPf_;
 
     /// Distance vector from neighbor cell center to face center
-    OptionalVector dNf_;
+    std::optional<Vector> dNf_;
 
     /// Magnitude of d_Pf
     Scalar dPfMag_ = S(0.0);
 
     /// Magnitude of d_Nf
-    OptionalScalar dNfMag_;
+    std::optional<Scalar> dNfMag_;
 
-    /// Owning boundary patch (nullopt for internal or unlinked faces)
-    OptionalRef<BoundaryPatch> patch_;
+    /// Owning boundary patch (nullptr for internal or unlinked faces)
+    const BoundaryPatch* patch_ = nullptr;
 };

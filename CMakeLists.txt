@@ -123,8 +123,8 @@ add_library(turblyze_core OBJECT
     src/Solver/SIMPLE.cpp
     src/Solver/PISO.cpp
     src/Models/Turbulence/TurbulenceModel.cpp
-    src/Models/Turbulence/RANS.cpp
-    src/Models/Turbulence/kOmegaSST.cpp
+    src/Models/Turbulence/RANS/RANS.cpp
+    src/Models/Turbulence/RANS/kOmegaSST.cpp
     src/PostProcessing/VTK/HDF5Wrapper.cpp
     src/PostProcessing/VTK/HDF5CellData.cpp
     src/PostProcessing/VTK/HDF5BoundaryData.cpp
@@ -152,6 +152,8 @@ target_include_directories(turblyze_core PUBLIC
     src/Schemes/TimeSchemes/
     src/Models/
     src/Models/Turbulence/
+    src/Models/Turbulence/RANS/
+    src/Models/Turbulence/Laminar/
     src/Case/
     src/Application/
     src/PostProcessing/

@@ -203,7 +203,7 @@ void load
 
     for (const auto& face : mesh.faces())
     {
-        if (face.isBoundary() && !face.patch().has_value())
+        if (face.isBoundary() && face.patch() == nullptr)
         {
             FatalError
             (

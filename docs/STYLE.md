@@ -359,7 +359,7 @@ A `std::span` in a signature therefore means "this is not a whole container".
 
 Domain-narrow aliases (`FaceIndex`, `PatchName`) are intentionally **not** used,
 since a single `Index` / `Name` keeps the vocabulary small. Local aliases (e.g.
-`Face::OptionalIndex`, `CaseReader::EntryMap`) live next to the class that needs
+`Cell::FaceSignList`, `CaseReader::EntryMap`) live next to the class that needs
 them.
 
 ## Special Member Functions

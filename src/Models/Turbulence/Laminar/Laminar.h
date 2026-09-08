@@ -101,7 +101,7 @@ public:
                 continue;
             }
 
-            if (face.patch()->get().type() != PatchType::wall)
+            if (face.patch()->type() != PatchType::wall)
             {
                 continue;
             }

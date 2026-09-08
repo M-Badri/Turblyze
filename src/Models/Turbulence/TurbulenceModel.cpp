@@ -81,5 +81,5 @@ std::unique_ptr<TurbulenceModel> TurbulenceModel::create
 
 NameList TurbulenceModel::availableModels()
 {
-    return {"Laminar", "kOmegaSST"};
+    return {"Laminar", "kOmegaSST", "Smagorinsky"};
 }

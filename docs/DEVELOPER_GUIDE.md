@@ -209,7 +209,7 @@ just-solved previous component, Gauss-Seidel style), and at the top of
 rank-local and boundary-only.
 
 **Key features**:
-1. **Direct Patch Lookup**: `Face::patch()` returns an `OptionalRef<BoundaryPatch>` linked at startup via `BoundaryConditions::linkFaces()`
+1. **Direct Patch Lookup**: `Face::patch()` returns a `const BoundaryPatch*` linked at startup via `BoundaryConditions::linkFaces()`
 2. **Per-Component Velocity BCs**: velocity has no vector BC type: it is registered as three independent scalar BCs under `Field::Ux/Uy/Uz`; `BoundaryType::create()` picks the component from the case file's `U` vector
 3. **Registration**: `BCLoader` parses each `boundaryConditions` sub-section and calls `BoundaryType::create(typeName, field, patchSection)`; `setBoundaryType()` stores the object; `finalize()` seals the registry and builds the trait flag arrays; `symmetry` is mesh-derived (`PatchType::symmetry`) and never case-file selectable
 4. **Boundary Value Calculation**: `boundaryFaceValue()` resolves `a·φP + b` for any field: every field (`Ux`, `Uy`, `Uz`, `p`, `pCorr`, `k`, `omega`, `nut`) is scalar
@@ -944,7 +944,7 @@ checks to verify:
 4. **Per-Component Velocity**: `BCLoader` registers `Ux`/`Uy`/`Uz`
    independently for case-file `U`
 5. **Boundary Values**: `boundaryFaceValue()` for supported scalar BC types
-6. **Patch Linking**: boundary `Face::patch()` has a value after `linkFaces()`
+6. **Patch Linking**: boundary `Face::patch()` is non-null after `linkFaces()`
 
 **Focused checks**:
 ```cpp

@@ -78,6 +78,21 @@ public:
         return modelName == "Laminar";
     }
 
+    /// Whether modelName selects a RANS model
+    [[nodiscard]] static bool isRANS(const Name& modelName) noexcept
+    {
+        return modelName == "kOmegaSST";
+    }
+
+    /// Whether modelName selects an LES model
+    [[nodiscard]] static bool isLES(const Name& modelName) noexcept
+    {
+        return modelName == "Smagorinsky"
+            || modelName == "WALE"
+            || modelName == "DynamicSmagorinsky"
+            || modelName == "WMLES";
+    }
+
     /// Construct the turbulence model selected by name
     [[nodiscard]] static std::unique_ptr<TurbulenceModel> create
     (

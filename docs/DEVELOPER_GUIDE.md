@@ -30,7 +30,7 @@ Headers (`.h`) and implementations (`.cpp`) live together in the same folder und
 following the OpenFOAM convention.
 
 - **`src/Primitives/`**: foundation types with no mesh-specific semantics
-  - `Scalar.h`, `Vector.h/.cpp`, `Tensor.h/.cpp`, `OptionalRef.h`,
+  - `Scalar.h`, `Vector.h/.cpp`, `Tensor.h/.cpp`,
     `ErrorHandler.h`, `Logger.h/.cpp`
 - **`src/Mesh/`**: mesh topology, geometric entities and mesh I/O
   - `BoundaryPatch.h`, `Face.h/.cpp`, `Cell.h/.cpp`, `Mesh.h`,

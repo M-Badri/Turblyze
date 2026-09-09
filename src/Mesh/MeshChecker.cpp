@@ -195,21 +195,13 @@ Scalar cellAspectRatio
         const Face& face = mesh.faces()[faceIdx];
         const Vector areaVec = face.normal() * face.projectedArea();
 
-        // Absolute components (sign irrelevant)
-        sumMagAreaComponents.setX
-        (
-            sumMagAreaComponents.x() + std::abs(areaVec.x())
-        );
-
-        sumMagAreaComponents.setY
-        (
-            sumMagAreaComponents.y() + std::abs(areaVec.y())
-        );
-
-        sumMagAreaComponents.setZ
-        (
-            sumMagAreaComponents.z() + std::abs(areaVec.z())
-        );
+        sumMagAreaComponents =
+            Vector
+            (
+                sumMagAreaComponents.x() + std::abs(areaVec.x()),
+                sumMagAreaComponents.y() + std::abs(areaVec.y()),
+                sumMagAreaComponents.z() + std::abs(areaVec.z())
+            );
     }
 
     // Find min and max projected areas

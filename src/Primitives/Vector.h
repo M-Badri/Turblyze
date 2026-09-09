@@ -9,17 +9,10 @@
  * @file Vector.h
  * @brief 3D vector class for geometric and mathematical operations in CFD
  *
- * @details This header defines a 3D vector class that serves as the foundation
- * for all vector-based calculations in the CFD solver. The Vector class
- * provides essential mathematical operations required in the finite volume
- * discretization and mesh operations.
- *
- * @class Vector
- * - Components access and manipulation (x, y, z coordinates)
- * - Arithmetic operations (addition, subtraction, scalar multiplication)
- * - Vector operations (dot product, cross product, normalization)
- * - Equality comparison operator
- * - Stream I/O operators for debugging
+ * @details This header defines a 3D vector class that serves as the
+ * foundation for all vector-based calculations in the CFD solver. The Vector
+ * class provides essential mathematical operations required in the finite
+ * volume discretization and mesh operations.
  *****************************************************************************/
 
 #pragma once
@@ -48,21 +41,10 @@ public:
     /// Construct vector with specified components
     Vector(Scalar xValue, Scalar yValue, Scalar zValue) noexcept
     :
-        x_(xValue),
-        y_(yValue),
-        z_(zValue)
+        x_{xValue},
+        y_{yValue},
+        z_{zValue}
     {}
-
-// ****************************** Setter Methods ******************************
-
-    /// Set X component
-    void setX(Scalar xValue) noexcept { x_ = xValue; }
-
-    /// Set Y component
-    void setY(Scalar yValue) noexcept { y_ = yValue; }
-
-    /// Set Z component
-    void setZ(Scalar zValue) noexcept { z_ = zValue; }
 
 // ***************************** Accessor Methods *****************************
 
@@ -80,33 +62,25 @@ public:
     /// Vector addition operator
     Vector operator+(const Vector& other) const noexcept
     {
-        Vector result(*this);
-        result += other;
-        return result;
+        return Vector{x_ + other.x_, y_ + other.y_, z_ + other.z_};
     }
 
     /// Vector subtraction operator
     Vector operator-(const Vector& other) const noexcept
     {
-        Vector result(*this);
-        result -= other;
-        return result;
+        return Vector{x_ - other.x_, y_ - other.y_, z_ - other.z_};
     }
 
     /// Scalar multiplication operator
-    Vector operator*(Scalar scalar) const noexcept
+    Vector operator*(Scalar s) const noexcept
     {
-        Vector result(*this);
-        result *= scalar;
-        return result;
+        return Vector{x_ * s, y_ * s, z_ * s};
     }
 
     /// Scalar division operator
-    Vector operator/(Scalar scalar) const noexcept
+    Vector operator/(Scalar s) const noexcept
     {
-        Vector result(*this);
-        result /= scalar;
-        return result;
+        return Vector{x_ / s, y_ / s, z_ / s};
     }
 
     /// Compound addition assignment operator
@@ -130,24 +104,24 @@ public:
     }
 
     /// Compound multiplication assignment operator
-    Vector& operator*=(Scalar scalar) noexcept
+    Vector& operator*=(Scalar s) noexcept
     {
-        x_ *= scalar;
-        y_ *= scalar;
-        z_ *= scalar;
+        x_ *= s;
+        y_ *= s;
+        z_ *= s;
 
         return *this;
     }
 
     /// Compound division assignment operator
-    Vector& operator/=(Scalar scalar) noexcept
+    Vector& operator/=(Scalar s) noexcept
     {
-        if (std::abs(scalar) <= vSmallValue)
+        if (std::abs(s) <= vSmallValue)
         {
             FatalError("Division by zero in Vector::operator/=");
         }
 
-        const Scalar inverse = S(1.0) / scalar;
+        const Scalar inverse = S(1.0) / s;
         x_ *= inverse;
         y_ *= inverse;
         z_ *= inverse;
@@ -224,9 +198,9 @@ private:
 }
 
 /// Scalar multiplication operator
-inline Vector operator*(Scalar scalar, const Vector& p) noexcept
+inline Vector operator*(Scalar s, const Vector& p) noexcept
 {
-    return p * scalar;
+    return p * s;
 }
 
 /// Stream output operator for Vector

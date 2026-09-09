@@ -468,9 +468,7 @@ void MeshReader::parseNodesSection
                 );
             }
 
-            nodes_[globalIdx].setX(xVal);
-            nodes_[globalIdx].setY(yVal);
-            nodes_[globalIdx].setZ(zVal);
+            nodes_[globalIdx] = Vector(xVal, yVal, zVal);
         }
     }
 }
@@ -566,9 +564,7 @@ void MeshReader::parseNodesSectionBinary
             }
         }
 
-        nodes_[globalIdx].setX(coords[0]);
-        nodes_[globalIdx].setY(coords[1]);
-        nodes_[globalIdx].setZ(coords[2]);
+        nodes_[globalIdx] = Vector(coords[0], coords[1], coords[2]);
     }
 
     consumeBinaryTrailer(ifs);

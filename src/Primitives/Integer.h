@@ -9,7 +9,7 @@
  * @file Integer.h
  * @brief Intent-revealing integer aliases
  *
- * @details Defines two aliases over std::size_t that signal how an integer is
+ * @details Defines aliases over std::size_t that signal how an integer is
  * used: Index addresses an element in storage, Count is a size or quantity.
  * The distinction is purely for the reader.
  *****************************************************************************/

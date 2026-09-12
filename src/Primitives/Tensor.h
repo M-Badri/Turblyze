@@ -7,18 +7,11 @@
 
  ------------------------------------------------------------------------------
  * @file Tensor.h
- * @brief 3x3 tensor class for geometric and mathematical operations
+ * @brief A class for second-order tensor (3x3) operations
  *
- * @details This header defines a 3x3 tensor class used for velocity
- * gradients, strain-rate and rotation tensors, Reynolds-stress tensors,
+ * @details This header defines a second-order tensor class used for velocity
+ * gradients, strain-rate, rotation tensors, Reynolds-stress tensors,
  * and any other second-order tensor fields in the solver.
- *
- * @class Tensor
- * - Component access and manipulation (row-major xx..zz)
- * - Arithmetic operations (addition, subtraction, scalar multiplication)
- * - Tensor operations (transpose, symmetric/antisymmetric part, trace)
- * - Double-dot product and Frobenius magnitude
- * - Stream I/O for debugging
  *****************************************************************************/
 
 #pragma once
@@ -52,9 +45,9 @@ public:
         Scalar zx, Scalar zy, Scalar zz
     ) noexcept
     :
-        xx_(xx), xy_(xy), xz_(xz),
-        yx_(yx), yy_(yy), yz_(yz),
-        zx_(zx), zy_(zy), zz_(zz)
+        xx_{xx}, xy_{xy}, xz_{xz},
+        yx_{yx}, yy_{yy}, yz_{yz},
+        zx_{zx}, zy_{zy}, zz_{zz}
     {}
 
 // ***************************** Accessor Methods *****************************
@@ -106,33 +99,44 @@ public:
     /// Tensor addition operator
     Tensor operator+(const Tensor& other) const noexcept
     {
-        Tensor result(*this);
-        result += other;
-        return result;
+        return
+            Tensor
+            {
+                xx_ + other.xx_, xy_ + other.xy_, xz_ + other.xz_,
+                yx_ + other.yx_, yy_ + other.yy_, yz_ + other.yz_,
+                zx_ + other.zx_, zy_ + other.zy_, zz_ + other.zz_
+            };
     }
 
     /// Tensor subtraction operator
     Tensor operator-(const Tensor& other) const noexcept
     {
-        Tensor result(*this);
-        result -= other;
-        return result;
+        return
+            Tensor
+            {
+                xx_ - other.xx_, xy_ - other.xy_, xz_ - other.xz_,
+                yx_ - other.yx_, yy_ - other.yy_, yz_ - other.yz_,
+                zx_ - other.zx_, zy_ - other.zy_, zz_ - other.zz_
+            };
     }
 
     /// Scalar multiplication operator
-    Tensor operator*(Scalar scalar) const noexcept
+    Tensor operator*(Scalar s) const noexcept
     {
-        Tensor result(*this);
-        result *= scalar;
-        return result;
+        return
+            Tensor
+            {
+                xx_ * s, xy_ * s, xz_ * s,
+                yx_ * s, yy_ * s, yz_ * s,
+                zx_ * s, zy_ * s, zz_ * s
+            };
     }
 
     /// Scalar division operator
-    Tensor operator/(Scalar scalar) const noexcept
+    Tensor operator/(Scalar s) const noexcept
     {
-        Tensor result(*this);
-        result /= scalar;
-        return result;
+        const Scalar inverse = S(1.0) / s;
+        return (*this) * inverse;
     }
 
     /// Compound addition assignment operator
@@ -156,29 +160,43 @@ public:
     }
 
     /// Compound multiplication assignment operator
-    Tensor& operator*=(Scalar scalar) noexcept
+    Tensor& operator*=(Scalar s) noexcept
     {
-        xx_ *= scalar; xy_ *= scalar; xz_ *= scalar;
-        yx_ *= scalar; yy_ *= scalar; yz_ *= scalar;
-        zx_ *= scalar; zy_ *= scalar; zz_ *= scalar;
+        xx_ *= s; xy_ *= s; xz_ *= s;
+        yx_ *= s; yy_ *= s; yz_ *= s;
+        zx_ *= s; zy_ *= s; zz_ *= s;
 
         return *this;
     }
 
     /// Compound division assignment operator
-    Tensor& operator/=(Scalar scalar) noexcept
+    Tensor& operator/=(Scalar s) noexcept
     {
-        if (std::abs(scalar) <= vSmallValue)
+        if (std::abs(s) <= vSmallValue)
         {
             FatalError("Division by zero in Tensor::operator/=");
         }
 
-        const Scalar inverse = S(1.0) / scalar;
+        const Scalar inverse = S(1.0) / s;
         xx_ *= inverse; xy_ *= inverse; xz_ *= inverse;
         yx_ *= inverse; yy_ *= inverse; yz_ *= inverse;
         zx_ *= inverse; zy_ *= inverse; zz_ *= inverse;
 
         return *this;
+    }
+
+    /// Equality comparison operator
+    bool operator==(const Tensor& other) const noexcept
+    {
+        return (std::abs(xx_ - other.xx_) <= smallValue)
+            && (std::abs(xy_ - other.xy_) <= smallValue)
+            && (std::abs(xz_ - other.xz_) <= smallValue)
+            && (std::abs(yx_ - other.yx_) <= smallValue)
+            && (std::abs(yy_ - other.yy_) <= smallValue)
+            && (std::abs(yz_ - other.yz_) <= smallValue)
+            && (std::abs(zx_ - other.zx_) <= smallValue)
+            && (std::abs(zy_ - other.zy_) <= smallValue)
+            && (std::abs(zz_ - other.zz_) <= smallValue);
     }
 
 // ****************************** Tensor Algebra ******************************
@@ -188,11 +206,11 @@ public:
     {
         return
             Tensor
-            (
+            {
                 xx_, yx_, zx_,
                 xy_, yy_, zy_,
                 xz_, yz_, zz_
-            );
+            };
     }
 
     /// Symmetric part of this tensor: 0.5 * (T + T^T)
@@ -204,11 +222,11 @@ public:
 
         return
             Tensor
-            (
+            {
                 xx_, sxy, sxz,
                 sxy, yy_, syz,
                 sxz, syz, zz_
-            );
+            };
     }
 
     /// Antisymmetric (skew) part of this tensor: 0.5 * (T - T^T)
@@ -220,11 +238,11 @@ public:
 
         return
             Tensor
-            (
+            {
                 S(0.0),  axy,     axz,
                 -axy,    S(0.0),  ayz,
                 -axz,    -ayz,    S(0.0)
-            );
+            };
     }
 
     /// Trace of this tensor
@@ -263,11 +281,11 @@ private:
 ) noexcept
 {
     return Tensor
-    (
+    {
         row0.x(), row0.y(), row0.z(),
         row1.x(), row1.y(), row1.z(),
         row2.x(), row2.y(), row2.z()
-    );
+    };
 }
 
 /// Double-dot product of two tensors: A:B = A_ij B_ij
@@ -292,17 +310,17 @@ private:
 {
     return
         Tensor
-        (
+        {
             a.x() * b.x(), a.x() * b.y(), a.x() * b.z(),
             a.y() * b.x(), a.y() * b.y(), a.y() * b.z(),
             a.z() * b.x(), a.z() * b.y(), a.z() * b.z()
-        );
+        };
 }
 
 /// Scalar multiplication operator (scalar * tensor)
-inline Tensor operator*(Scalar scalar, const Tensor& T) noexcept
+inline Tensor operator*(Scalar s, const Tensor& T) noexcept
 {
-    return T * scalar;
+    return T * s;
 }
 
 /// Stream output operator for Tensor

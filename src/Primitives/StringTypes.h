@@ -10,7 +10,7 @@
  * @brief Intent-revealing string aliases
  *
  * @details Defines aliases over std::string that signal what the text
- * represents, a name, a parser token, a file path, or display text.
+ * represents, a name, a parser token, a file path, or a display text.
  *****************************************************************************/
 
 #pragma once

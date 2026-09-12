@@ -33,7 +33,7 @@ class Vector
 {
 public:
 
-/// ************************* Special Member Functions ************************
+// ************************* Special Member Functions ************************
 
     /// Default constructor
     Vector() noexcept = default;
@@ -80,7 +80,8 @@ public:
     /// Scalar division operator
     Vector operator/(Scalar s) const noexcept
     {
-        return Vector{x_ / s, y_ / s, z_ / s};
+        const Scalar inverse = S(1.0) / s;
+        return Vector{x_ * inverse, y_ * inverse, z_ * inverse};
     }
 
     /// Compound addition assignment operator
@@ -132,9 +133,9 @@ public:
     /// Equality comparison operator
     bool operator==(const Vector& other) const noexcept
     {
-        return (std::abs(x_ - other.x_) <= vSmallValue)
-            && (std::abs(y_ - other.y_) <= vSmallValue)
-            && (std::abs(z_ - other.z_) <= vSmallValue);
+        return (std::abs(x_ - other.x_) <= smallValue)
+            && (std::abs(y_ - other.y_) <= smallValue)
+            && (std::abs(z_ - other.z_) <= smallValue);
     }
 
 // ****************************** Private Members *****************************
@@ -174,7 +175,7 @@ private:
 /// Squared magnitude of a vector
 [[nodiscard]] inline Scalar magnitudeSquared(const Vector& v) noexcept
 {
-    return v.x() * v.x() + v.y() * v.y() + v.z() * v.z();
+    return dot(v, v);
 }
 
 /// Magnitude of a vector

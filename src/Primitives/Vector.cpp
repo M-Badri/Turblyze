@@ -23,7 +23,7 @@
 
 std::ostream& operator<<(std::ostream& os, const Vector& p)
 {
-    // save the current format 
+    // save the current format
     const auto flags = os.flags();
     const auto prec = os.precision();
 

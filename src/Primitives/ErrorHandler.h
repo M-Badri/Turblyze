@@ -7,7 +7,7 @@
 
  ------------------------------------------------------------------------------
  * @file ErrorHandler.h
- * @brief Fatal error and warning functions for program diagnostics
+ * @brief Fatal error and warning for program diagnostics
  *****************************************************************************/
 
 #pragma once
@@ -59,7 +59,7 @@ using Location = std::source_location;
 }
 
 
-/// Print a warning message and continue execution
+/// Print a warning message and continue the program
 inline void Warning
 (
     const Message& warningMessage,

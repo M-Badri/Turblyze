@@ -28,7 +28,7 @@ std::ostream& operator<<(std::ostream& os, const Tensor& T)
     const auto prec = os.precision();
 
     // change the format for tensor output
-    os << std::fixed << std::setprecision(6);
+    os  << std::fixed << std::setprecision(6);
 
     // tensor output: row-major bracketed rows
     os  << '(' << T.xx() << ", " << T.xy() << ", " << T.xz() << "; "

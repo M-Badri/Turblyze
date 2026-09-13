@@ -1,0 +1,51 @@
+name: CI Build & Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Ubuntu 24.04 (GCC C++20 + MPI + PETSc)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            pkg-config \
+            libeigen3-dev \
+            libopenmpi-dev \
+            openmpi-bin \
+            petsc-dev \
+            libmetis-dev \
+            libhdf5-openmpi-dev \
+            catch2
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=ON \
+            -DTURBLYZE_NATIVE_ARCH=OFF
+
+      - name: Build Solver and Test Targets
+        run: cmake --build build -j$(nproc)
+
+      - name: Run CTest Suite (Serial & MPI)
+        # Allows MPI to oversubscribe cores on 2-vCPU GitHub runners
+        env:
+          OMPI_MCA_rmaps_base_oversubscribe: "true"
+          PRTE_MCA_rmaps_default_mapping_policy: ":oversubscribe"
+        run: |
+          ctest --test-dir build \
+            --output-on-failure \
+            -LE regression

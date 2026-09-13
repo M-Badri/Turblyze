@@ -8,14 +8,19 @@ on:
 
 jobs:
   build-and-test:
-    name: Ubuntu 24.04 (GCC C++20 + MPI + PETSc)
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install system dependencies
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -30,6 +35,19 @@ jobs:
             libhdf5-openmpi-dev \
             catch2
 
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew unlink hdf5 2>/dev/null || true
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install \
+            pkg-config \
+            eigen \
+            open-mpi \
+            petsc \
+            metis \
+            hdf5-mpi \
+            catch2
+
       - name: Configure CMake
         run: |
           cmake -S . -B build \
@@ -38,7 +56,7 @@ jobs:
             -DTURBLYZE_NATIVE_ARCH=OFF
 
       - name: Build Solver and Test Targets
-        run: cmake --build build -j$(nproc)
+        run: cmake --build build -j
 
       - name: Run CTest Suite (Serial & MPI)
         # Allows MPI to oversubscribe cores on 2-vCPU GitHub runners

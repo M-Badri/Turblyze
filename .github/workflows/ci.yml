@@ -97,6 +97,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v5
 
+      - name: Ensure Unix line endings for shell scripts
+        run: |
+          sed -i 's/\r$//' tests/probe/checkAbort.sh tests/regression/checkRegression.sh
+          chmod +x tests/probe/checkAbort.sh tests/regression/checkRegression.sh
+
       - name: Configure CMake
         run: |
           cmake -S . -B build \
@@ -108,14 +113,13 @@ jobs:
         run: cmake --build build -j
 
       - name: Run CTest Suite (Serial & MPI)
-        # Allows MPI to oversubscribe cores on 2-vCPU GitHub runners
-        # and allow root execution inside WSL container
-        env:
-          OMPI_MCA_rmaps_base_oversubscribe: "true"
-          PRTE_MCA_rmaps_default_mapping_policy: ":oversubscribe"
-          OMPI_ALLOW_RUN_AS_ROOT: "1"
-          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: "1"
         run: |
+          export OMPI_ALLOW_RUN_AS_ROOT=1
+          export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+          export PRTE_ALLOW_RUN_AS_ROOT=1
+          export PRTE_ALLOW_RUN_AS_ROOT_CONFIRM=1
+          export OMPI_MCA_rmaps_base_oversubscribe=true
+          export PRTE_MCA_rmaps_default_mapping_policy=:oversubscribe
           ctest --test-dir build \
             --output-on-failure \
             -LE regression

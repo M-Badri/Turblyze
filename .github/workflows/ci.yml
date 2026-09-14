@@ -67,3 +67,55 @@ jobs:
           ctest --test-dir build \
             --output-on-failure \
             -LE regression
+
+  windows-wsl:
+    name: windows-latest (WSL2 Ubuntu)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: wsl-bash {0}
+
+    steps:
+      - name: Set up WSL (Ubuntu 24.04)
+        uses: Vampire/setup-wsl@v7
+        with:
+          distribution: Ubuntu-24.04
+          wsl-version: 2
+          update: true
+          additional-packages: >
+            build-essential
+            cmake
+            pkg-config
+            libeigen3-dev
+            libopenmpi-dev
+            openmpi-bin
+            petsc-dev
+            libmetis-dev
+            libhdf5-openmpi-dev
+            catch2
+
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=ON \
+            -DTURBLYZE_NATIVE_ARCH=OFF
+
+      - name: Build Solver and Test Targets
+        run: cmake --build build -j
+
+      - name: Run CTest Suite (Serial & MPI)
+        # Allows MPI to oversubscribe cores on 2-vCPU GitHub runners
+        # and allow root execution inside WSL container
+        env:
+          OMPI_MCA_rmaps_base_oversubscribe: "true"
+          PRTE_MCA_rmaps_default_mapping_policy: ":oversubscribe"
+          OMPI_ALLOW_RUN_AS_ROOT: "1"
+          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: "1"
+        run: |
+          ctest --test-dir build \
+            --output-on-failure \
+            -LE regression

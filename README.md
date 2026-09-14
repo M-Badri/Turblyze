@@ -48,7 +48,7 @@ A 3D incompressible CFD solver implementing the SIMPLE algorithm with k-omega SS
 ### System Requirements
 - **C++20** compatible compiler (GCC 11+, or Clang/AppleClang 15+). The warning and optimization flags target GCC, Clang, and AppleClang
 - **CMake** 3.20 or later
-- **Linux** or **macOS** environment
+- **Linux**, **macOS**, or **Windows (via WSL2)** environment
 
 ### Dependencies
 - **Eigen 3**: Linear algebra (header-only), used for the least-squares gradient precompute
@@ -76,6 +76,16 @@ sudo apt install build-essential cmake pkg-config libeigen3-dev libopenmpi-dev p
 #### Installation on MacOS:
 ```bash
 brew install cmake pkg-config eigen open-mpi petsc metis hdf5-mpi catch2
+```
+
+#### Installation on Windows 10/11 (WSL2):
+Enable WSL and install Ubuntu from PowerShell:
+```powershell
+wsl --install -d Ubuntu
+```
+Then open the Ubuntu terminal and install the dependencies:
+```bash
+sudo apt install build-essential cmake pkg-config libeigen3-dev libopenmpi-dev petsc-dev libmetis-dev libhdf5-openmpi-dev catch2
 ```
 
 (`catch2` is only needed to build the tests; omit it and configure with

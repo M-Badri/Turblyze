@@ -13,7 +13,6 @@ SPDX-License-Identifier: Apache-2.0
 
 <p align="center">
   <a href="https://github.com/mohamed-i-mousa/Turblyze/actions/workflows/ci.yml"><img src="https://github.com/mohamed-i-mousa/Turblyze/actions/workflows/ci.yml/badge.svg" alt="CI Build & Test"></a>
-  <img src="https://img.shields.io/badge/C%2B%2B-20-blue.svg?logo=cplusplus" alt="C++20">
   <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows%20(WSL2)-lightgrey.svg" alt="Platforms">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0"></a>
 </p>

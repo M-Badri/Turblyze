@@ -17,24 +17,22 @@ SPDX-License-Identifier: Apache-2.0
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0"></a>
 </p>
 
+This is a 3D incompressible CFD solver parallelized with MPI that solves steady-state and transient flows and offers few turbulence modeling options. It can read unstructured Fluent `.msh` meshes and export results in VTKHDF format (`.vtkhdf`) for visualization in ParaView.
+
 ## Features
 
 ### Core Capabilities
-- **3D Incompressible Flow**: Solves momentum equations with the pressure correction via the SIMPLE algorithm
+- **3D Incompressible Flow**: Solves momentum equations with pressure correction with the SIMPLE/PISO algorithm
 
-- **Steady-state and Transient (URANS)**: Runs as a steady SIMPLE solve or runs a transient simulation with implicit Euler / Crank-Nicolson / second-order implicit time schemes using a fixed number of PISO outer correctors per step. Selected by the `time` case section; transient runs append every written step into one temporal `.vtkhdf` file (geometry stored once)
+- **Steady-state and Transient (URANS)**: Runs a steady-state simulation with the SIMPLE algorithm or a transient simulation with implicit Euler / Crank-Nicolson / second-order implicit time schemes using the PISO algorithm
 
-- **Collocated Grid**: Uses Rhie-Chow face-velocity interpolation to prevent pressure checkerboarding
-
-- **Multiple Convection Schemes**: Upwind (UDS), Second-Order Upwind (SOU), Central-Difference (CDS), and LUST (Linear-Upwind Stabilized Transport) convection schemes with deferred-correction approach to improve stability
+- **Convection Schemes**: Upwind (UDS), Second-Order Upwind (SOU), Central-Difference (CDS), and LUST (Linear-Upwind Stabilized Transport) convection schemes with the deferred-correction approach
 
 - **Gradient Reconstruction**: Weighted least-squares cell-centered gradients
 
-- **Boundary Conditions**: flexible per-field BC system with direct face-to-patch linking and per-component velocity handling; unrecognized BC types are rejected with a fatal error listing the valid types
+- **Boundary Conditions**: `fixedValue`, `zeroGradient`, `fixedGradient`, `noSlip` (velocity), wall functions (`kWallFunction`, `omegaWallFunction`, `nutWallFunction`), and mesh-derived `symmetry` planes
 
-- **Turbulence Modeling**: k-omega SST model with wall distance calculation and wall functions
-
-- **Wall Distance Calculation**: Mesh wave iterative propagation for accurate turbulence modeling
+- **Turbulence Modeling**: Laminar or k-omega SST model with wall functions
 
 - **Distributed-Memory Parallelism (MPI)**: Runtime METIS domain decomposition with ghost-cell halo exchange. The same binary runs serially or under `mpirun -np N ./Turblyze case`, with no case-file changes. Linear systems are solved with PETSc Krylov solvers.
 
@@ -44,18 +42,18 @@ SPDX-License-Identifier: Apache-2.0
 
 - **Precision Control**: Configurable single (float) or double precision arithmetic
 
-- **Documentation**: Full Doxygen-style code documentation
+- **Documentation**: Doxygen-style code documentation
 
 
 ## Prerequisites
 
 ### System Requirements
-- **C++20** compatible compiler (GCC 11+, or Clang/AppleClang 15+). The warning and optimization flags target GCC, Clang, and AppleClang
+- **C++20**-compatible compiler (GCC 11+, or Clang/AppleClang 15+). The warning and optimization flags target GCC, Clang, and AppleClang
 - **CMake** 3.20 or later
 - **Linux**, **macOS**, or **Windows (via WSL2)** environment
 
 ### Dependencies
-- **Eigen 3**: Linear algebra (header-only), used for the least-squares gradient precompute
+- **Eigen 3**: Linear algebra (header-only), used for the least-squares gradient precomputation.
 - **PETSc**: Krylov linear solvers, located through `pkg-config` (so
   `pkg-config` itself is required at configure time)
 - **MPI**: any MPI implementation providing a C++-capable compiler wrapper
@@ -68,16 +66,16 @@ SPDX-License-Identifier: Apache-2.0
 - **HDF5 (parallel/MPI build)**: C library used to write the VTKHDF output.
   The VTKHDF writers do collective MPI-IO into one shared file per grid, so the
   build **strongly prefers a parallel (MPI-enabled) HDF5**. A serial-only HDF5
-  satisfies the configure step but the parallel writes then **fail or misbehave
+  satisfies the configure step, but the parallel writes then **fail or misbehave
   at runtime**, so install the MPI-enabled package, or point `HDF5_ROOT` /
-  `HDF5_PREFER_PARALLEL` at a parallel installation.
+  `HDF5_PREFER_PARALLEL` to a parallel installation.
 
 #### Installation on Ubuntu/Debian:
 ```bash
 sudo apt install build-essential cmake pkg-config libeigen3-dev libopenmpi-dev petsc-dev libmetis-dev libhdf5-openmpi-dev catch2
 ```
 
-#### Installation on MacOS:
+#### Installation on macOS:
 ```bash
 brew install cmake pkg-config eigen open-mpi petsc metis hdf5-mpi catch2
 ```
@@ -382,18 +380,10 @@ For developers wanting to extend the solver, see `docs/DEVELOPER_GUIDE.md` for:
 - Creating custom discretization schemes
 - Debugging techniques
 
-## Roadmap
-
-Directions under consideration for future development, aspirational, not commitments. This list will evolve over time.
-
-- [ ] Fully-coupled implicit solver
-- [ ] Additional turbulence models
-- [ ] Additional mesh formats (e.g. OpenFOAM polyMesh, CGNS)
-
 ## License and Support
 
 Turblyze is released under the **Apache License 2.0**, see the [`LICENSE`](LICENSE)
-file for the full text. Every source file carries an SPDX
-`Apache-2.0` identifier.
+file for the full text.
+
 
 For questions or bug reports, open an issue on the project's issue tracker.

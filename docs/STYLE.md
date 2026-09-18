@@ -88,8 +88,8 @@ this order:
 // Standard library headers
 #include <vector>
 
-// External library headers     (Eigen, PETSc, HDF5)
-#include <eigen3/Eigen/SparseCore>
+// External library headers     (PETSc, HDF5)
+#include <petscmat.h>
 
 // Project headers
 #include "ErrorHandler.h"
@@ -384,7 +384,7 @@ ClassName& operator=(ClassName&&) = delete;
 The brief reason on the `///` comment documents *why* the operation is restricted:
 - `Not copyable (const T& members)`, reference members cannot be rebound
 - `Not movable (const T& members)`, same
-- `Not movable (self-referential Eigen solver)`, unsafe default move
+- `Not movable (holds non-movable resource / handles)`, unsafe default move
 
 ### Choosing the right rule
 
@@ -392,7 +392,7 @@ The brief reason on the `///` comment documents *why* the operation is restricte
 |---|---|---|---|
 | `const T&` or `T&` reference | `= delete` | `= delete` | `= default` (noexcept) |
 | `std::unique_ptr<T>` | `= delete` | `= default` | `= default` (noexcept) |
-| Eigen iterative solver | `= delete` | `= delete` | `= default` (noexcept) |
+| Non-movable resource / handle | `= delete` | `= delete` | `= default` (noexcept) |
 | No non-trivial members | *(declare none, rule of zero)* | | |
 
 **Rule of zero**: If the compiler-generated defaults are correct, declare nothing.

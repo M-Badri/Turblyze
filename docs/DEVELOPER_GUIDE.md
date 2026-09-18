@@ -261,8 +261,9 @@ override `cellGradient`, and add one branch to the factory.
 3. **Matrix Assembly**: Form normal equations `ATA·∇φ = ATb`
    - `ATA = Σ w·(r ⊗ r)` (3×3 matrix, cached as its inverse)
    - `ATb = Σ w·Δφ·r` (3×1 vector, rebuilt for each field)
-4. **Solution**: Multiply by cached `invATA`; the precompute uses Eigen LLT,
-   then FullPivLU fallback. Degenerate cells get a zero inverse and a warning.
+4. **Solution**: Multiply by cached `invATA`; the precompute uses
+   Cramer's rule (`solve3x3` in `Cramer3x3.h`) to solve for each column
+   of the inverse. Degenerate cells get a zero inverse and a warning.
 
 #### Face Gradient Computation (`faceGradient`)
 **Method**: Corrected interpolation of cell gradients for internal and processor-halo faces
@@ -974,7 +975,7 @@ Verify mathematical correctness:
 1. **Neighbor Validation**: Check distance calculations and weighting
 2. **Matrix Precompute**: Verify cached `invATA_` behavior for regular and
    degenerate stencils
-3. **Solver Robustness**: Check LLT/FullPivLU fallback behavior
+3. **Solver Robustness**: Check Cramer3x3 determinant and degeneracy handling
 4. **Gradient Limiting**: Verify limiter activation in high-gradient regions
 5. **Face Interpolation**: Test averaging weights and corrections
 6. **Boundary Gradients**: Verify normal/tangential decomposition
@@ -982,7 +983,7 @@ Verify mathematical correctness:
 **Matrix checks**:
 ```cpp
 // Check matrix properties during local instrumentation.
-LLT(ATA).info() == Eigen::Success || FullPivLU(ATA).isInvertible()
+std::abs(det) > smallValue
 0.0 <= limiter_alpha && limiter_alpha <= 1.0
 ```
 

@@ -15,12 +15,8 @@
 // Implementation header
 #include "LeastSquares.h"
 
-// External library headers
-#include <Eigen/Core>
-#include <Eigen/Cholesky>
-#include <Eigen/LU>
-
 // Project headers
+#include "Cramer3x3.h"
 #include "ErrorHandler.h"
 
 // ************************* Special Member Functions *************************
@@ -113,12 +109,6 @@ Vector LeastSquares::cellGradient
 
 void LeastSquares::precomputeInverseATA()
 {
-    // Aliases for Eigen types
-    using Matrix3 = Eigen::Matrix<Scalar, 3, 3>;
-    using Vector3 = Eigen::Matrix<Scalar, 3, 1>;
-    using CholeskySolver = Eigen::LLT<Matrix3>;
-    using LUSolver = Eigen::FullPivLU<Matrix3>;
-
     // Sized over every cell; ghosts are not gradient sites and stay zero
     invATA_.resize(mesh().numCells());
 
@@ -128,11 +118,10 @@ void LeastSquares::precomputeInverseATA()
 
     for (Index cellIdx = 0; cellIdx < numOwnedCells; ++cellIdx)
     {
-        Matrix3 ATA;
-        Vector3 rVector;
         const Cell& cell = mesh().cells()[cellIdx];
 
-        ATA.setZero();
+        // Assemble ATA in row-major flat array (symmetric 3x3)
+        Scalar ATA[9] = {};
 
         // Neighbor cells contribution (purely geometric)
         for (Index neighborIdx : cell.neighborCellIndices())
@@ -144,8 +133,12 @@ void LeastSquares::precomputeInverseATA()
             const Scalar rMagSqr = magnitudeSquared(r);
             const Scalar w = S(1.0) / (rMagSqr + smallValue);
 
-            rVector << r.x(), r.y(), r.z();
-            ATA.noalias() += w * (rVector * rVector.transpose());
+            ATA[0] += w * r.x() * r.x();
+            ATA[1] += w * r.x() * r.y();
+            ATA[2] += w * r.x() * r.z();
+            ATA[4] += w * r.y() * r.y();
+            ATA[5] += w * r.y() * r.z();
+            ATA[8] += w * r.z() * r.z();
         }
 
         // Boundary faces contribution (purely geometric)
@@ -159,47 +152,36 @@ void LeastSquares::precomputeInverseATA()
             const Scalar rMagSqr = magnitudeSquared(r);
             const Scalar w = S(1.0) / (rMagSqr + smallValue);
 
-            rVector << r.x(), r.y(), r.z();
-            ATA.noalias() += w * (rVector * rVector.transpose());
+            ATA[0] += w * r.x() * r.x();
+            ATA[1] += w * r.x() * r.y();
+            ATA[2] += w * r.x() * r.z();
+            ATA[4] += w * r.y() * r.y();
+            ATA[5] += w * r.y() * r.z();
+            ATA[8] += w * r.z() * r.z();
         }
 
-        // Invert ATA and store symmetric result
-        Matrix3 inv;
-        bool inverted = false;
+        // Fill symmetric lower triangle
+        ATA[3] = ATA[1];
+        ATA[6] = ATA[2];
+        ATA[7] = ATA[5];
 
-        CholeskySolver llt(ATA);
+        // Solve for each column of the inverse
+        const Scalar e0[3] = {S(1.0), S(0.0), S(0.0)};
+        const Scalar e1[3] = {S(0.0), S(1.0), S(0.0)};
+        const Scalar e2[3] = {S(0.0), S(0.0), S(1.0)};
 
-        if (llt.info() == Eigen::Success)
+        Scalar col0[3], col1[3], col2[3];
+        solve3x3(ATA, e0, col0);
+        solve3x3(ATA, e1, col1);
+        solve3x3(ATA, e2, col2);
+
+        // Store upper triangle: {xx, xy, xz, yy, yz, zz}
+        invATA_[cellIdx] =
         {
-            inv = llt.solve(Matrix3::Identity());
-            inverted = true;
-        }
-        else
-        {
-            LUSolver lu(ATA);
-
-            if (lu.isInvertible())
-            {
-                inv = lu.inverse();
-                inverted = true;
-            }
-        }
-
-        if (inverted)
-        {
-            // Store upper triangle: {xx, xy, xz, yy, yz, zz}
-            invATA_[cellIdx] =
-            {
-                inv(0,0), inv(0,1), inv(0,2),
-                          inv(1,1), inv(1,2),
-                                    inv(2,2)
-            };
-        }
-        else
-        {
-            invATA_[cellIdx] = {0, 0, 0, 0, 0, 0};
-            ++degenerateCells;
-        }
+            col0[0], col1[0], col2[0],
+                     col1[1], col2[1],
+                              col2[2]
+        };
     }
 
     if (degenerateCells > 0)

@@ -21,9 +21,6 @@ option(TURBLYZE_USE_DOUBLE_PRECISION
 option(TURBLYZE_NATIVE_ARCH
        "Optimize for the build host CPU (-march=native)" ON)
 
-# Find Eigen3 package (for least-squares precompute only)
-find_package(Eigen3 REQUIRED NO_MODULE)
-
 # Find PETSc via pkg-config
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PETSC REQUIRED IMPORTED_TARGET PETSc)
@@ -177,14 +174,13 @@ if(TURBLYZE_USE_DOUBLE_PRECISION)
     target_compile_definitions(turblyze_core PUBLIC PROJECT_USE_DOUBLE_PRECISION)
 endif()
 
-# Link the solver core against HDF5, PETSc, MPI, METIS, and Eigen3 (PUBLIC so
+# Link the solver core against HDF5, PETSc, MPI, and METIS (PUBLIC so
 # the executable and test targets inherit the same link line)
 target_link_libraries(turblyze_core PUBLIC
     HDF5::HDF5
     PkgConfig::PETSC
     MPI::MPI_CXX
     ${METIS_LIBRARY}
-    Eigen3::Eigen
 )
 
 # --- The solver executable: thin main() over the core library ---

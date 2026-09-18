@@ -53,7 +53,6 @@ This is a 3D incompressible CFD solver parallelized with MPI that solves steady-
 - **Linux**, **macOS**, or **Windows (via WSL2)** environment
 
 ### Dependencies
-- **Eigen 3**: Linear algebra (header-only), used for the least-squares gradient precomputation.
 - **PETSc**: Krylov linear solvers, located through `pkg-config` (so
   `pkg-config` itself is required at configure time)
 - **MPI**: any MPI implementation providing a C++-capable compiler wrapper
@@ -72,12 +71,12 @@ This is a 3D incompressible CFD solver parallelized with MPI that solves steady-
 
 #### Installation on Ubuntu/Debian:
 ```bash
-sudo apt install build-essential cmake pkg-config libeigen3-dev libopenmpi-dev petsc-dev libmetis-dev libhdf5-openmpi-dev catch2
+sudo apt install build-essential cmake pkg-config libopenmpi-dev petsc-dev libmetis-dev libhdf5-openmpi-dev catch2
 ```
 
 #### Installation on macOS:
 ```bash
-brew install cmake pkg-config eigen open-mpi petsc metis hdf5-mpi catch2
+brew install cmake pkg-config open-mpi petsc metis hdf5-mpi catch2
 ```
 
 #### Installation on Windows 10/11 (WSL2):
@@ -87,7 +86,7 @@ wsl --install -d Ubuntu
 ```
 Then open the Ubuntu terminal and install the dependencies:
 ```bash
-sudo apt install build-essential cmake pkg-config libeigen3-dev libopenmpi-dev petsc-dev libmetis-dev libhdf5-openmpi-dev catch2
+sudo apt install build-essential cmake pkg-config libopenmpi-dev petsc-dev libmetis-dev libhdf5-openmpi-dev catch2
 ```
 
 (`catch2` is only needed to build the tests; omit it and configure with

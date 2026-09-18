@@ -46,6 +46,7 @@ add_executable(turblyze_unit_tests
     unit/Parallel/CommTests.cpp
     unit/Parallel/ReduceSerialTests.cpp
     unit/Parallel/GlobalIndexTests.cpp
+    unit/LinearSystem/Cramer4x4Tests.cpp
     unit/LinearSystem/Cramer3x3Tests.cpp
 )
 

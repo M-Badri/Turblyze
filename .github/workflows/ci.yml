@@ -53,7 +53,7 @@ jobs:
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_TESTING=ON \
-            -DTURBLYZE_NATIVE_ARCH=OFF
+            -DTURBLYZE_NATIVE_ARCH=ON
 
       - name: Build Solver and Test Targets
         run: cmake --build build -j
@@ -107,7 +107,7 @@ jobs:
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_TESTING=ON \
-            -DTURBLYZE_NATIVE_ARCH=OFF
+            -DTURBLYZE_NATIVE_ARCH=ON
 
       - name: Build Solver and Test Targets
         run: cmake --build build -j

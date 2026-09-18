@@ -194,7 +194,7 @@ linearSolvers
     {
         solver          BiCGSTAB;       // Bi-Conjugate Gradient Stabilized
         preconditioner  Jacobi;         // Diagonal — parallel-friendly
-        tolerance       1e-6;           // Eigen |r|/|b| tolerance
+        tolerance       1e-6;           // |r|/|b| tolerance
         maxIter         100;            // Maximum iterations
     }
 

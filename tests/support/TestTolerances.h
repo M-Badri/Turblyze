@@ -32,7 +32,7 @@
 namespace TestTolerances
 {
 
-#ifdef PROJECT_USE_DOUBLE_PRECISION
+#ifdef TURBLYZE_DOUBLE_PRECISION
 
 /// One-or-two-op FP kernels (sqrt, divide): relative
 constexpr Scalar relTight = S(1.0e-12);

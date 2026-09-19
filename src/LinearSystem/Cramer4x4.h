@@ -66,7 +66,7 @@ inline void solve4x4
 // ---- ARM NEON ----
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)
 
-#ifdef PROJECT_USE_DOUBLE_PRECISION
+#ifdef TURBLYZE_DOUBLE_PRECISION
     // ---------------------------------------------------------
     // AArch64 NEON — double precision (float64x2_t, 2-wide)
     // ---------------------------------------------------------
@@ -260,7 +260,7 @@ inline void solve4x4
 #elif defined(__x86_64__) || defined(_M_X64) \
    || defined(__i386__)   || defined(_M_IX86)
 
-#ifdef PROJECT_USE_DOUBLE_PRECISION
+#ifdef TURBLYZE_DOUBLE_PRECISION
 
 #if !defined(__AVX__)
     #error "Double-precision Cramer4x4 on x86 requires AVX (-mavx)."
@@ -494,6 +494,6 @@ inline void solve4x4
         _mm_mul_ps(dots, _mm_set1_ps(inv_det));
     _mm_storeu_ps(x, x_res);
 
-#endif // PROJECT_USE_DOUBLE_PRECISION
+#endif // TURBLYZE_DOUBLE_PRECISION
 #endif // architecture
 }

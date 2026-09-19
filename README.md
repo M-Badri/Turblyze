@@ -112,11 +112,11 @@ build.
 ### Build Options
 
 Pass these at configure time, e.g.
-`cmake -S . -B build.nosync -DTURBLYZE_USE_DOUBLE_PRECISION=OFF`:
+`cmake -S . -B build.nosync -DTURBLYZE_DOUBLE_PRECISION=OFF`:
 
 | Option                          | Default | Effect                                              |
 |---------------------------------|---------|-----------------------------------------------------|
-| `TURBLYZE_USE_DOUBLE_PRECISION` | `ON`    | Double-precision `Scalar`; turn `OFF` for single precision. The solver prints the active mode at runtime via `SCALAR_MODE`. |
+| `TURBLYZE_DOUBLE_PRECISION`     | `ON`    | Double-precision `Scalar`; turn `OFF` for single precision. The solver prints the active mode at runtime via `SCALAR_MODE`. |
 | `TURBLYZE_NATIVE_ARCH`          | `ON`    | Adds `-march=native` in Release. Turn `OFF` for portable / cluster-deployable binaries. |
 | `BUILD_TESTING`                 | `ON`    | Build the Catch2 test suite (needs Catch2 v3). Turn `OFF` for a solver-only build with no test dependency. |
 | `TURBLYZE_REGRESSION_CD_PIN`    | Apple M4 value | Pinned sphere Cd for the `regression` test; machine-local under `-march=native`, re-pin per CPU. See [Testing](#testing). |

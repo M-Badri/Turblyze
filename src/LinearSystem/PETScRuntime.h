@@ -44,7 +44,7 @@ static_assert
 (
     std::is_same_v<PetscScalar, Scalar>,
     "PetscScalar must match Scalar: rebuild PETSc with the matching "
-    "--with-precision, or flip TURBLYZE_USE_DOUBLE_PRECISION"
+    "--with-precision, or flip TURBLYZE_DOUBLE_PRECISION"
 );
 
 // COO index arrays and mesh indices assume PETSc's default 32-bit indices

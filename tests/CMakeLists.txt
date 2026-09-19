@@ -151,7 +151,7 @@ set(TURBLYZE_REGRESSION_CD_TOL "1e-4" CACHE STRING
 set(TURBLYZE_SPHERE_MESH "${CMAKE_SOURCE_DIR}/inputFiles/sphere.msh")
 if(NOT EXISTS "${TURBLYZE_SPHERE_MESH}")
     message(STATUS "Turblyze: sphere mesh absent - regression test disabled")
-elseif(NOT TURBLYZE_USE_DOUBLE_PRECISION)
+elseif(NOT TURBLYZE_DOUBLE_PRECISION)
     message(STATUS "Turblyze: single precision - regression test disabled")
 elseif(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
     message(STATUS "Turblyze: not a Release build - regression test disabled")

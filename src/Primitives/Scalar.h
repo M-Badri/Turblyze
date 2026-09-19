@@ -31,7 +31,7 @@
 // ************************** Precision Configuration *************************
 
 /// Floating-point precision type (configured via CMakeLists.txt)
-#ifdef PROJECT_USE_DOUBLE_PRECISION
+#ifdef TURBLYZE_DOUBLE_PRECISION
     using Scalar = double;
     const Message SCALAR_MODE = "double (FP64)";
 #else

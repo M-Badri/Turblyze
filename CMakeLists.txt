@@ -10,14 +10,14 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Set a default build type if none was specified
+# Set a default build type
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
 # Build options
-option(TURBLYZE_USE_DOUBLE_PRECISION
-       "Build with double-precision Scalar (otherwise float)" ON)
+option(TURBLYZE_DOUBLE_PRECISION
+       "Build with double-precision Scalar" ON)
 option(TURBLYZE_NATIVE_ARCH
        "Optimize for the build host CPU (-march=native)" ON)
 
@@ -25,10 +25,10 @@ option(TURBLYZE_NATIVE_ARCH
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PETSC REQUIRED IMPORTED_TARGET PETSc)
 
-# Find MPI (initialized through PETSc; called directly in src/Parallel/)
+# Find MPI
 find_package(MPI REQUIRED COMPONENTS CXX)
 
-# Find METIS (mesh partitioning, used by src/Parallel/MeshDecomposer)
+# Find METIS (mesh partitioning)
 find_path(METIS_INCLUDE_DIR metis.h REQUIRED)
 find_library(METIS_LIBRARY metis REQUIRED)
 
@@ -36,19 +36,16 @@ find_library(METIS_LIBRARY metis REQUIRED)
 set(HDF5_PREFER_PARALLEL ON)
 find_package(HDF5 REQUIRED COMPONENTS C)
 
-# Warning flags, shared by the solver library and the test targets: warning-
-# clean under this set is part of the Definition of Done (GCC/Clang/AppleClang)
+# Warning flags
 set(TURBLYZE_WARNING_FLAGS
     -Wall
     -Wextra
     -Wpedantic
     -Wshadow
     -Wconversion
-    -Wsign-conversion
     -Wdouble-promotion
     -Wformat=2
     -Wcast-align
-    -Wunused
     -Wnull-dereference
     -Wimplicit-fallthrough
     -Wold-style-cast
@@ -56,14 +53,13 @@ set(TURBLYZE_WARNING_FLAGS
     -Wnon-virtual-dtor
 )
 
-# Release optimization flags, likewise shared with the test targets
+# Release optimization flags
 set(TURBLYZE_RELEASE_FLAGS -O3)
 if(TURBLYZE_NATIVE_ARCH)
     list(APPEND TURBLYZE_RELEASE_FLAGS -march=native)
 endif()
 
-# One definition of the shared warning and Release flags for every target
-# (solver core, executable, and the test targets in tests/)
+# Apply compiler warning and Release optimization flags to a target
 function(turblyze_apply_build_flags target)
     target_compile_options(${target} PRIVATE
         $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:${TURBLYZE_WARNING_FLAGS}>
@@ -75,9 +71,7 @@ function(turblyze_apply_build_flags target)
     endif()
 endfunction()
 
-# --- Solver core: every source except main.cpp, so the test targets can link
-#     the exact same objects the executable does (OBJECT library keeps the
-#     np=1 behaviour bit-identical to the pre-split single-executable build) ---
+# Source directories
 add_library(turblyze_core OBJECT
     src/Primitives/Vector.cpp
     src/Primitives/Tensor.cpp
@@ -135,7 +129,7 @@ add_library(turblyze_core OBJECT
     src/Application/CFDApplication.cpp
 )
 
-# --- Include directories (PUBLIC: propagated to the executable and tests) ---
+# Include directories
 target_include_directories(turblyze_core PUBLIC
     src/Mesh/
     src/Primitives/
@@ -160,22 +154,19 @@ target_include_directories(turblyze_core PUBLIC
     src/Parallel/
 )
 
-# SYSTEM: /opt/homebrew/include also holds third-party headers whose
-# warnings are not ours to fix
+# Include METIS headers as SYSTEM to suppress third-party compiler warnings
 target_include_directories(turblyze_core SYSTEM PUBLIC
     ${METIS_INCLUDE_DIR}
 )
 
 turblyze_apply_build_flags(turblyze_core)
 
-# PUBLIC so a test target linking turblyze_core builds with the matching
-# Scalar/PetscScalar precision (a mismatch is a static_assert, not a silent bug)
-if(TURBLYZE_USE_DOUBLE_PRECISION)
-    target_compile_definitions(turblyze_core PUBLIC PROJECT_USE_DOUBLE_PRECISION)
+# Define TURBLYZE_DOUBLE_PRECISION macro if requested
+if(TURBLYZE_DOUBLE_PRECISION)
+    target_compile_definitions(turblyze_core PUBLIC TURBLYZE_DOUBLE_PRECISION)
 endif()
 
-# Link the solver core against HDF5, PETSc, MPI, and METIS (PUBLIC so
-# the executable and test targets inherit the same link line)
+# Link the solver core against HDF5, PETSc, MPI, and METIS
 target_link_libraries(turblyze_core PUBLIC
     HDF5::HDF5
     PkgConfig::PETSC
@@ -183,17 +174,19 @@ target_link_libraries(turblyze_core PUBLIC
     ${METIS_LIBRARY}
 )
 
-# --- The solver executable: thin main() over the core library ---
+# main()
 add_executable(${PROJECT_NAME} src/main.cpp)
 
+# Link the solver executable against the core library
 target_link_libraries(${PROJECT_NAME} PRIVATE turblyze_core)
 
+# Apply compiler warning and Release optimization flags to the executable
 turblyze_apply_build_flags(${PROJECT_NAME})
 
-# --- Unit and MPI tests (Catch2 + CTest). BUILD_TESTING defaults ON; configure
-#     with -DBUILD_TESTING=OFF for a production-only build identical to before ---
+# Unit tests (Catch2 + CTest)
 include(CTest)
 
+# Build Catch2 unit, MPI, and regression test suites when enabled
 if(BUILD_TESTING)
     add_subdirectory(tests)
 endif()

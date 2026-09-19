@@ -31,7 +31,7 @@ following the OpenFOAM convention.
 
 - **`src/Primitives/`**: foundation types with no mesh-specific semantics
   - `Scalar.h`, `Vector.h/.cpp`, `Tensor.h/.cpp`,
-    `ErrorHandler.h`, `Logger.h/.cpp`
+    `Integer.h`, `StringTypes.h`, `ErrorHandler.h`, `Logger.h/.cpp`
 - **`src/Mesh/`**: mesh topology, geometric entities and mesh I/O
   - `BoundaryPatch.h`, `Face.h/.cpp`, `Cell.h/.cpp`, `Mesh.h`,
     `MeshReader.h/.cpp`, `MeshChecker.h/.cpp`, `MeshCreator.h/.cpp`
@@ -82,10 +82,10 @@ following the OpenFOAM convention.
     fully-coupled block-matrix solver would be a sibling of `Segregated`
     under `MomentumTransport`
 - **`src/Models/`**: physical models
-  - `Turbulence/TurbulenceModel.h` (abstract interface),
-    `Turbulence/RANS.h/.cpp` (two-equation eddy-viscosity base),
-    `Turbulence/Laminar.h` (laminar null-object),
-    `Turbulence/kOmegaSST.h/.cpp` (k–omega SST model)
+  - `Turbulence/TurbulenceModel.h/.cpp` (abstract interface),
+    `Turbulence/Laminar/Laminar.h` (laminar null-object),
+    `Turbulence/RANS/RANS.h/.cpp` (two-equation eddy-viscosity base),
+    `Turbulence/RANS/kOmegaSST.h/.cpp` (k–omega SST model)
 - **`src/PostProcessing/`**: derived fields and output orchestration
   - `DerivedFields.h/.cpp` (velocity/vorticity magnitude, Q-criterion, strain rate)
   - `PostProcess.h/.cpp` (after-solve statistics and export orchestration)
@@ -105,15 +105,19 @@ following the OpenFOAM convention.
 
 ### Scalar precision
 - `Scalar` is aliased to `double` by default because the CMake option
-  `TURBLYZE_USE_DOUBLE_PRECISION` is `ON`; CMake then defines
-  `PROJECT_USE_DOUBLE_PRECISION` for the target.
-- Switch to float with `-DTURBLYZE_USE_DOUBLE_PRECISION=OFF`. The program
+  `TURBLYZE_DOUBLE_PRECISION` is `ON`; CMake then defines
+  `TURBLYZE_DOUBLE_PRECISION` for the target.
+- Switch to float with `-DTURBLYZE_DOUBLE_PRECISION=OFF`. The program
   prints the active mode via `SCALAR_MODE`.
 - Global tolerances in `src/Primitives/Scalar.h` (e.g., `smallValue`, `vSmallValue`, `largeValue`).
 
 ### Vector
 - Simple 3D vector with arithmetic, `dot`, `cross`, `magnitude`, normalization, and stream IO.
 - Used throughout for geometry (centroids, normals) and vector fields.
+
+### Tensor
+- 3x3 second-order tensor with arithmetic, `transpose`, `symm`, `skew`, `trace`, `doubleDot`, `outer`, equality comparison, and stream IO.
+- Used for velocity gradients, strain-rate, rotation, Reynolds-stress tensors, and tensor fields.
 
 ### Fields
 - `CellData<T>`: typed cell-centered fields sized from `Mesh::cellCount()`.
@@ -541,7 +545,7 @@ boundary turbulent viscosity, the turbulence solve step, wall-distance status,
 named VTK output fields, and named convergence residuals. It does not own mesh
 or field storage.
 
-`Laminar` (`Laminar.h`) is the null-object model for non-turbulent runs:
+`Laminar` (`Laminar/Laminar.h`) is the null-object model for non-turbulent runs:
 it owns a zero `nut` field, returns no residual or VTK output fields, and
 reports `isTurbulent() == false`. Its `solve()` hook is a no-op. Force
 reporting uses `TurbulenceModel::wallShearStress(Ux, Uy, Uz)`, which lets
@@ -550,13 +554,13 @@ tangential velocity and laminar viscosity while RANS models return their
 wall-function shear field for the current model state and velocity fields
 through the same interface.
 
-`RANS` (`RANS.{h,cpp}`) is the shared two-equation eddy-viscosity layer. It
+`RANS` (`RANS/RANS.{h,cpp}`) is the shared two-equation eddy-viscosity layer. It
 owns `nu`, `nut`, `k`, k/dissipation residual bookkeeping, wall distance,
 wall-function geometry/diagnostics (`nutWall`, `yPlus`), and common helpers
 such as `velocityDivergence()`, strain-rate magnitude computation, on-demand
 wall-shear evaluation, and the turbulent-kinetic-energy inlet estimate.
 
-Class `kOmegaSST`:
+Class `kOmegaSST` (`RANS/kOmegaSST.{h,cpp}`):
 - Is fully initialized by its constructor from inlined parameters (laminar
   viscosity, initial k/omega, under-relaxation factors, debug flag), with no
   config-struct indirection.
@@ -709,8 +713,8 @@ the symmetric positive definite pressure-correction system:
 ## Precision and numerical tolerances
 
 - Precision is selected at configure/build time via
-  `TURBLYZE_USE_DOUBLE_PRECISION`; the target compile definition consumed by
-  `Scalar.h` is `PROJECT_USE_DOUBLE_PRECISION`.
+  `TURBLYZE_DOUBLE_PRECISION`; the target compile definition consumed by
+  `Scalar.h` is `TURBLYZE_DOUBLE_PRECISION`.
 - Tolerance constants adapt to `Scalar` (e.g., comparisons, divisions, gradient detection).
 - Many algorithms include small epsilons to guard against degeneracy.
 

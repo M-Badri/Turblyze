@@ -102,7 +102,7 @@ namespace Logger
     /// Print one labelled scaled-residual line
     void scaledResidual(const Name& name, Scalar value);
 
-    /// Print the non-debug one-line per-iteration residual summary,
+    /// Print the non-debug one-line per-iteration residual summary
     void residualSummary
     (
         Scalar mass,

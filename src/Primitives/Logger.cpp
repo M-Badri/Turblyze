@@ -56,20 +56,20 @@ void Logger::linearSolverConfigHeader()
 
     header
         << "    "
-        << std::left  << std::setw(10) << "Equation"
-        << std::left  << std::setw(12) << "Solver"
-        << std::left  << std::setw(16) << "Preconditioner"
-        << std::left  << std::setw(12) << "Tolerance"
-        << std::right << std::setw(11) << "Max Iters"
+        << std::left << std::setw(10) << "Equation"
+        << std::left << std::setw(12) << "Solver"
+        << std::left << std::setw(16) << "Preconditioner"
+        << std::left << std::setw(16) << "Tolerance"
+        << std::left << std::setw(10) << "Max Iters"
         << '\n';
 
     header
         << "    "
-        << std::left  << std::setw(10) << "--------"
-        << std::left  << std::setw(12) << "------"
-        << std::left  << std::setw(16) << "--------------"
-        << std::left  << std::setw(12) << "----------"
-        << std::right << std::setw(11) << "---------"
+        << std::left << std::setw(10) << "--------"
+        << std::left << std::setw(12) << "------"
+        << std::left << std::setw(16) << "--------------"
+        << std::left << std::setw(16) << "---------"
+        << std::left << std::setw(10) << "---------"
         << '\n';
 
     std::cout << header.str();
@@ -89,11 +89,12 @@ void Logger::linearSolverConfigRow
 
     row
         << "    "
-        << std::left  << std::setw(10) << equation
-        << std::left  << std::setw(12) << solver
-        << std::left  << std::setw(16) << preconditioner
-        << std::scientific << std::setprecision(6) << tolerance
-        << std::right << std::setw(11) << maxIters;
+        << std::left << std::setw(10) << equation
+        << std::left << std::setw(12) << solver
+        << std::left << std::setw(16) << preconditioner
+        << std::scientific << std::setprecision(6)
+        << std::left << std::setw(16) << tolerance
+        << std::left << std::setw(10) << maxIters;
 
     std::cout << row.str() << '\n';
 }
@@ -105,7 +106,7 @@ void Logger::keyValue(const Message& label, Scalar value)
 
     row
         << "    " << std::left << std::setw(24) << label
-        << "  " << std::scientific << std::setprecision(6) << value;
+        << "  " << std::defaultfloat << std::setprecision(6) << value;
 
     std::cout << row.str() << '\n';
 }
@@ -117,7 +118,7 @@ void Logger::keyValue(const Message& label, Scalar value, const Message& unit)
 
     row
         << "    " << std::left << std::setw(24) << label
-        << "  " << std::fixed << std::setprecision(6) << value
+        << "  " << std::defaultfloat << std::setprecision(6) << value
         << ' ' << unit;
 
     std::cout << row.str() << '\n';
@@ -129,8 +130,8 @@ void Logger::keyValue(const Message& label, Count value)
     std::ostringstream row;
 
     row
-        << "    " << std::left  << std::setw(24) << label
-        << "  " << std::right << std::setw(12) << value;
+        << "    " << std::left << std::setw(24) << label
+        << "  " << value;
 
     std::cout << row.str() << '\n';
 }
@@ -139,7 +140,7 @@ void Logger::keyValue(const Message& label, Count value)
 void Logger::keyValue(const Message& label, const Message& value)
 {
     std::ostringstream row;
-    
+
     row
         << "    " << std::left << std::setw(24) << label
         << "  " << value;
@@ -164,7 +165,7 @@ void Logger::residualTableHeader()
         << std::left  << std::setw(11) << "--------"
         << std::left  << std::setw(11) << "--------"
         << std::right << std::setw(5)  << "-----"
-        << "    " << "-----------" << '\n';
+        << "    " << "----------------------" << '\n';
 
     std::cout << table.str();
 }
@@ -293,7 +294,7 @@ void Logger::residualSummary
     std::ostringstream summary;
 
     summary
-        << " - Mass: " << std::scientific << mass
+        << " - Mass: " << std::scientific << std::setprecision(6) << mass
         << ", Velocity: " << velocity
         << ", Pressure: " << pressure;
 

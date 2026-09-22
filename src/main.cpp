@@ -13,9 +13,9 @@
 // ********************************** Headers *********************************
 
 // Standard library headers
-#include <iostream>
-#include <iomanip>
 #include <chrono>
+#include <format>
+#include <iostream>
 
 // Project headers
 #include "Scalar.h"
@@ -56,11 +56,7 @@ int main(int argc, char* argv[])
   ~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~·~··~·~
 )" << '\n';
 
-    std::cout
-        << "Running with precision: " << SCALAR_MODE << '\n';
-
-    std::cout 
-        << std::fixed << std::setprecision(6);
+    std::cout << std::format("Running with precision: {}\n", SCALAR_MODE);
 
     FilePath caseFile = "../defaultCase";
 
@@ -68,13 +64,11 @@ int main(int argc, char* argv[])
     {
         caseFile = argv[1];
 
-        std::cout
-            << "Using case file: " << caseFile << '\n';
+        std::cout << std::format("Using case file: {}\n", caseFile);
     }
     else
     {
-        std::cout
-            << "Using default case: " << caseFile << '\n';
+        std::cout << std::format("Using default case: {}\n", caseFile);
     }
 
     CFDApplication::run(caseFile);
@@ -89,7 +83,7 @@ int main(int argc, char* argv[])
     Logger::keyValue
     (
         "Total execution time",
-        std::to_string(duration.count()) + " seconds"
+        std::format("{} seconds", duration.count())
     );
     Logger::iterationFooter();
     std::cout << '\n';

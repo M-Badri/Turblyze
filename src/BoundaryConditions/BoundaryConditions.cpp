@@ -16,9 +16,10 @@
 #include "BoundaryConditions.h"
 
 // Standard library headers
+#include <format>
 #include <iostream>
-#include <utility>
 #include <set>
+#include <utility>
 
 // Project headers
 #include "ErrorHandler.h"
@@ -439,39 +440,32 @@ void BoundaryConditions::validatePatchNames() const
 
 void BoundaryConditions::printSummary() const
 {
-    std::cout
-        << '\n'
-        << "--- Boundary Conditions Setup Summary ---" << '\n';
+    std::cout << "\n--- Boundary Conditions Setup Summary ---\n";
 
     if (patches_.empty())
     {
-        std::cout
-            << "  No mesh patches loaded." << '\n';
-
+        std::cout << "  No mesh patches loaded.\n";
         return;
     }
 
-    std::cout
-        << "Total Mesh Patches Loaded: " << patches_.size()
-        << '\n';
+    std::cout << std::format
+    (
+        "Total Mesh Patches Loaded: {}\n",
+        patches_.size()
+    );
 
     for (const auto& meshPatch : patches_)
     {
-        std::cout
-            << "  ------------------------------------"
-            << '\n';
-
-        std::cout
-            << "  Mesh Patch Name         : "
-            << meshPatch.name() << '\n';
-
-        std::cout
-            << "  Zone ID                 : "
-            << meshPatch.zoneIdx() << '\n';
-
-        std::cout
-            << "  Number of Faces         : "
-            << meshPatch.numFaces() << '\n';
+        std::cout << std::format
+        (
+            "  ------------------------------------\n"
+            "  Mesh Patch Name         : {}\n"
+            "  Zone ID                 : {}\n"
+            "  Number of Faces         : {}\n",
+            meshPatch.name(),
+            meshPatch.zoneIdx(),
+            meshPatch.numFaces()
+        );
 
         const auto patchIterator =
             boundaryTypes_.find(meshPatch.name());
@@ -482,24 +476,22 @@ void BoundaryConditions::printSummary() const
          && !patchIterator->second.empty()
         )
         {
-            std::cout
-                << "  Configured Physical BCs :" << '\n';
+            std::cout << "  Configured Physical BCs :\n";
 
             for (const auto& fieldBCPair : patchIterator->second)
             {
-                std::cout
-                    << "      Field '"
-                    << fieldToString(fieldBCPair.first)
-                    << "': Type: ";
+                std::cout << std::format
+                (
+                    "      Field '{}': Type: ",
+                    fieldToString(fieldBCPair.first)
+                );
 
                 fieldBCPair.second->write(std::cout);
 
-                std::cout
-                    << '\n';
+                std::cout << '\n';
             }
         }
     }
 
-    std::cout
-        << "  ------------------------------------" << '\n';
+    std::cout << "  ------------------------------------\n";
 }

@@ -16,6 +16,7 @@
 #include "MeshCreator.h"
 
 // Standard library headers
+#include <format>
 #include <iostream>
 #include <string>
 #include <utility>
@@ -92,10 +93,11 @@ Mesh readCompleteMesh(const CaseConfiguration& config)
         meshReader.moveBoundaryPatches()
     );
 
-    std::cout
-        << "Mesh Loaded: " << mesh.numNodes() << " nodes, "
-        << mesh.numFaces() << " faces, " << mesh.numCells()
-        << " cells." << '\n';
+    std::cout << std::format
+    (
+        "Mesh Loaded: {} nodes, {} faces, {} cells.\n",
+        mesh.numNodes(), mesh.numFaces(), mesh.numCells()
+    );
 
     prepareGeometry(mesh, config.debug);
 
@@ -255,8 +257,12 @@ Mesh readCompleteMesh(const CaseConfiguration& config)
         );
         patch.setName
         (
-            "processor" + std::to_string(Comm::myProcessorNum())
-          + "to" + std::to_string(block.procNeighborRanks[p])
+            std::format
+            (
+                "processor{}to{}",
+                Comm::myProcessorNum(),
+                block.procNeighborRanks[p]
+            )
         );
         patch.setType(PatchType::processor);
         patches.push_back(std::move(patch));
@@ -347,9 +353,11 @@ Mesh create(const CaseConfiguration& config)
 
     if (Comm::master())
     {
-        std::cout
-            << "Decomposing into " << Comm::numProcessors()
-            << " submeshes (METIS)." << '\n';
+        std::cout << std::format
+        (
+            "Decomposing into {} submeshes (METIS).\n",
+            Comm::numProcessors()
+        );
     }
 
     return decomposeAndDistribute(std::move(completeMesh), config.debug);

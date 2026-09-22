@@ -16,6 +16,7 @@
 #include "BCLoader.h"
 
 // Standard library headers
+#include <format>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -207,9 +208,11 @@ void load
         {
             FatalError
             (
-                "Boundary face "
-              + std::to_string(face.idx())
-              + " has no patch after linking."
+                std::format
+                (
+                    "Boundary face {} has no patch after linking.",
+                    face.idx()
+                )
             );
         }
     }
@@ -314,9 +317,11 @@ void load
                             config.turbulenceIntensity
                         );
 
-                    std::cout
-                        << "Inlet turbulence kinetic energy : " << value
-                        << '\n';
+                    std::cout << std::format
+                    (
+                        "Inlet turbulence kinetic energy : {}\n",
+                        value
+                    );
                 }
                 else
                 {
@@ -384,8 +389,11 @@ void load
                             config.hydraulicDiameter
                         );
 
-                    std::cout
-                        << "Inlet specific dissipation : " << value << '\n';
+                    std::cout << std::format
+                    (
+                        "Inlet specific dissipation : {}\n",
+                        value
+                    );
                 }
                 else
                 {
@@ -444,9 +452,11 @@ void load
         bcManager.printSummary();
     }
 
-    std::cout
-        << "Boundary conditions set for "
-        << mesh.patches().size() << " patches." << '\n';
+    std::cout << std::format
+    (
+        "Boundary conditions set for {} patches.\n",
+        mesh.patches().size()
+    );
 }
 
 } // namespace BCLoader

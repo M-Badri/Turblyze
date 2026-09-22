@@ -17,8 +17,8 @@
 
 // Standard library headers
 #include <array>
+#include <format>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 
 // Project headers
@@ -266,54 +266,41 @@ void reportForces
             FatalError("Failed to open forces output file: " + outputPath);
         }
 
-        file << std::scientific << std::setprecision(6);
-        file
-            << "Aerodynamic forces" << '\n'
-            << "Patch          : " << config.forcesPatch << '\n'
-            << "Drag direction : " << dragDir << '\n'
-            << "Lift direction : " << liftDir << '\n'
-            << "Reference U    : " << config.referenceVelocity << '\n'
-            << '\n'
-            << std::left << std::setw(12) << "Force"
-            << std::right
-            << std::setw(16) << "Pressure"
-            << std::setw(16) << "Friction"
-            << std::setw(16) << "Total" << '\n'
-            << std::left << std::setw(12) << "Drag [N]"
-            << std::right
-            << std::setw(16) << pressureDrag
-            << std::setw(16) << frictionDrag
-            << std::setw(16) << totalDrag << '\n'
-            << std::left << std::setw(12) << "Lift [N]"
-            << std::right
-            << std::setw(16) << pressureLift
-            << std::setw(16) << frictionLift
-            << std::setw(16) << totalLift << '\n'
-            << '\n'
-            << "Force coefficients (dimensionless), referenceArea = "
-            << config.referenceArea << '\n'
-            << std::left << std::setw(12) << "Coeff"
-            << std::right
-            << std::setw(16) << "Pressure"
-            << std::setw(16) << "Friction"
-            << std::setw(16) << "Total" << '\n'
-            << std::left << std::setw(12) << "Cd"
-            << std::right
-            << std::setw(16) << pressureCd
-            << std::setw(16) << frictionCd
-            << std::setw(16) << totalCd << '\n'
-            << std::left << std::setw(12) << "Cl"
-            << std::right
-            << std::setw(16) << pressureCl
-            << std::setw(16) << frictionCl
-            << std::setw(16) << totalCl << '\n';
+        file << std::format
+        (
+            "Aerodynamic forces\n"
+            "Patch          : {}\n"
+            "Drag direction : {}\n"
+            "Lift direction : {}\n"
+            "Reference U    : {}\n"
+            "\n"
+            "{:<12}{:>16}{:>16}{:>16}\n"
+            "{:<12}{:>16.6e}{:>16.6e}{:>16.6e}\n"
+            "{:<12}{:>16.6e}{:>16.6e}{:>16.6e}\n"
+            "\n"
+            "Force coefficients (dimensionless), referenceArea = {:.6e}\n"
+            "{:<12}{:>16}{:>16}{:>16}\n"
+            "{:<12}{:>16.6e}{:>16.6e}{:>16.6e}\n"
+            "{:<12}{:>16.6e}{:>16.6e}{:>16.6e}\n",
+            config.forcesPatch,
+            dragDir,
+            liftDir,
+            config.referenceVelocity,
+            "Force", "Pressure", "Friction", "Total",
+            "Drag [N]", pressureDrag, frictionDrag, totalDrag,
+            "Lift [N]", pressureLift, frictionLift, totalLift,
+            config.referenceArea,
+            "Coeff", "Pressure", "Friction", "Total",
+            "Cd", pressureCd, frictionCd, totalCd,
+            "Cl", pressureCl, frictionCl, totalCl
+        );
         file.close();
     }
 
     // Print the breakdown to the console as two compact tables
     std::cout << '\n';
     Logger::sectionHeader("Aerodynamic Forces");
-    Logger::subsection("Patch: " + config.forcesPatch);
+    Logger::subsection(std::format("Patch: {}", config.forcesPatch));
 
     Logger::breakdownHeader("Forces [N]");
     Logger::breakdownRow("Drag", pressureDrag, frictionDrag, totalDrag);
@@ -323,7 +310,7 @@ void reportForces
     Logger::breakdownRow("Cd", pressureCd, frictionCd, totalCd);
     Logger::breakdownRow("Cl", pressureCl, frictionCl, totalCl);
 
-    Logger::subsection("Output file: " + outputPath);
+    Logger::subsection(std::format("Output file: {}", outputPath));
     Logger::iterationFooter();
 }
 
@@ -386,13 +373,19 @@ void appendForceHistory
         FatalError("Failed to open forces history file: " + csvPath);
     }
 
-    file << std::scientific << std::setprecision(6)
-         << time << ','
-         << forces.pressureDrag << ',' << forces.frictionDrag << ','
-         << totalDrag << ','
-         << forces.pressureLift << ',' << forces.frictionLift << ','
-         << totalLift << ','
-         << totalCd << ',' << totalCl << '\n';
+    file << std::format
+    (
+        "{:.6e},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e}\n",
+        time,
+        forces.pressureDrag,
+        forces.frictionDrag,
+        totalDrag,
+        forces.pressureLift,
+        forces.frictionLift,
+        totalLift,
+        totalCd,
+        totalCl
+    );
 }
 
 } // namespace Forces

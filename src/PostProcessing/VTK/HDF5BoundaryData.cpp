@@ -17,6 +17,7 @@
 
 // Standard library headers
 #include <algorithm>
+#include <format>
 #include <iostream>
 #include <limits>
 #include <unordered_map>
@@ -374,11 +375,17 @@ void HDF5BoundaryData::writeGeometry()
 
     if (debug_)
     {
-        std::cout
-            << "VTKHDF boundary geometry written: " << fileName_ << '\n'
-            << "  - Boundary faces: " << globalNumBoundaryFaces_ << '\n'
-            << "  - Boundary nodes: " << pointRows.globalRows << '\n'
-            << "  - Number of pieces: " << Comm::numProcessors() << '\n';
+        std::cout << std::format
+        (
+            "VTKHDF boundary geometry written: {}\n"
+            "  - Boundary faces: {}\n"
+            "  - Boundary nodes: {}\n"
+            "  - Number of pieces: {}\n",
+            fileName_,
+            globalNumBoundaryFaces_,
+            pointRows.globalRows,
+            Comm::numProcessors()
+        );
     }
 }
 

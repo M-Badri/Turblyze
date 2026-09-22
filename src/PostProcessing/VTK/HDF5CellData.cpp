@@ -17,6 +17,7 @@
 
 // Standard library headers
 #include <algorithm>
+#include <format>
 #include <iostream>
 #include <utility>
 #include <vector>
@@ -434,12 +435,18 @@ void HDF5CellData::writeGeometry()
 
     if (debug_)
     {
-        std::cout
-            << "VTKHDF geometry written: " << fileName_ << '\n'
-            << "  - Number of points: " << pointRows.globalRows << '\n'
-            << "  - Number of cells: " << globalNumCells_ << '\n'
-            << "  - Number of pieces: " << Comm::numProcessors() << '\n'
-            << "  - Cell type: VTK_POLYHEDRON" << '\n';
+        std::cout << std::format
+        (
+            "VTKHDF geometry written: {}\n"
+            "  - Number of points: {}\n"
+            "  - Number of cells: {}\n"
+            "  - Number of pieces: {}\n"
+            "  - Cell type: VTK_POLYHEDRON\n",
+            fileName_,
+            pointRows.globalRows,
+            globalNumCells_,
+            Comm::numProcessors()
+        );
     }
 }
 

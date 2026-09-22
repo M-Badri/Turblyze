@@ -16,13 +16,14 @@
 #include "MeshReader.h"
 
 // Standard library headers
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <algorithm>
 #include <charconv>
 #include <cstdint>
 #include <cstring>
+#include <format>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <vector>
 
 // Project headers
@@ -286,21 +287,15 @@ void MeshReader::parseFile(const FilePath& filePath)
     buildTopology();
     validateMesh();
 
-    std::cout
-        << "Mesh loaded successfully:" << '\n';
-
-    std::cout
-        << "  - Nodes: " << nodes_.size() << '\n';
-
-    std::cout
-        << "  - Faces: " << faces_.size() << '\n';
-
-    std::cout
-        << "  - Cells: " << cells_.size() << '\n';
-
-    std::cout
-        << "  - Boundary patches: "
-        << boundaryPatches_.size() << '\n';
+    std::cout << std::format
+    (
+        "Mesh loaded successfully:\n"
+        "  - Nodes: {}\n"
+        "  - Faces: {}\n"
+        "  - Cells: {}\n"
+        "  - Boundary patches: {}\n",
+        nodes_.size(), faces_.size(), cells_.size(), boundaryPatches_.size()
+    );
 }
 
 

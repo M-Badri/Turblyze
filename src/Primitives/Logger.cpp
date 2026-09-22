@@ -16,9 +16,8 @@
 #include "Logger.h"
 
 // Standard library headers
-#include <iomanip>
+#include <format>
 #include <iostream>
-#include <sstream>
 #include <string>
 
 // ***************************** namespace Logger *****************************
@@ -37,7 +36,7 @@ void Logger::sectionHeader(const Message& title)
 
 void Logger::iterationHeader(Count n)
 {
-    sectionHeader("Iteration " + std::to_string(n));
+    sectionHeader(std::format("Iteration {}", n));
 }
 
 
@@ -52,27 +51,13 @@ void Logger::iterationFooter()
 
 void Logger::linearSolverConfigHeader()
 {
-    std::ostringstream header;
-
-    header
-        << "    "
-        << std::left << std::setw(10) << "Equation"
-        << std::left << std::setw(12) << "Solver"
-        << std::left << std::setw(16) << "Preconditioner"
-        << std::left << std::setw(16) << "Tolerance"
-        << std::left << std::setw(10) << "Max Iters"
-        << '\n';
-
-    header
-        << "    "
-        << std::left << std::setw(10) << "--------"
-        << std::left << std::setw(12) << "------"
-        << std::left << std::setw(16) << "--------------"
-        << std::left << std::setw(16) << "---------"
-        << std::left << std::setw(10) << "---------"
-        << '\n';
-
-    std::cout << header.str();
+    std::cout << std::format
+    (
+        "    {:<10}{:<12}{:<16}{:<16}{:<10}\n"
+        "    {:<10}{:<12}{:<16}{:<16}{:<10}\n",
+        "Equation", "Solver", "Preconditioner", "Tolerance", "Max Iters",
+        "--------", "------", "--------------", "---------", "---------"
+    );
 }
 
 
@@ -85,89 +70,63 @@ void Logger::linearSolverConfigRow
     Count maxIters
 )
 {
-    std::ostringstream row;
-
-    row
-        << "    "
-        << std::left << std::setw(10) << equation
-        << std::left << std::setw(12) << solver
-        << std::left << std::setw(16) << preconditioner
-        << std::scientific << std::setprecision(6)
-        << std::left << std::setw(16) << tolerance
-        << std::left << std::setw(10) << maxIters;
-
-    std::cout << row.str() << '\n';
+    std::cout << std::format
+    (
+        "    {:<10}{:<12}{:<16}{:<16g}{:<10}\n",
+        equation, solver, preconditioner, tolerance, maxIters
+    );
 }
 
 
 void Logger::keyValue(const Message& label, Scalar value)
 {
-    std::ostringstream row;
-
-    row
-        << "    " << std::left << std::setw(24) << label
-        << "  " << std::defaultfloat << std::setprecision(6) << value;
-
-    std::cout << row.str() << '\n';
+    std::cout << std::format
+    (
+        "    {:<24}  {:.6g}\n",
+        label, value
+    );
 }
 
 
 void Logger::keyValue(const Message& label, Scalar value, const Message& unit)
 {
-    std::ostringstream row;
-
-    row
-        << "    " << std::left << std::setw(24) << label
-        << "  " << std::defaultfloat << std::setprecision(6) << value
-        << ' ' << unit;
-
-    std::cout << row.str() << '\n';
+    std::cout << std::format
+    (
+        "    {:<24}  {:.6g} {}\n",
+        label, value, unit
+    );
 }
 
 
 void Logger::keyValue(const Message& label, Count value)
 {
-    std::ostringstream row;
-
-    row
-        << "    " << std::left << std::setw(24) << label
-        << "  " << value;
-
-    std::cout << row.str() << '\n';
+    std::cout << std::format
+    (
+        "    {:<24}  {}\n",
+        label, value
+    );
 }
 
 
 void Logger::keyValue(const Message& label, const Message& value)
 {
-    std::ostringstream row;
-
-    row
-        << "    " << std::left << std::setw(24) << label
-        << "  " << value;
-
-    std::cout << row.str() << '\n';
+    std::cout << std::format
+    (
+        "    {:<24}  {}\n",
+        label, value
+    );
 }
 
 
 void Logger::residualTableHeader()
 {
-    std::ostringstream table;
-
-    table
-        << "  "
-        << std::left  << std::setw(11) << "Equation"
-        << std::left  << std::setw(11) << "Solver"
-        << std::right << std::setw(5)  << "Iters"
-        << "    " << "Linear Solver Residual" << '\n';
-
-    table
-        << "  "
-        << std::left  << std::setw(11) << "--------"
-        << std::left  << std::setw(11) << "--------"
-        << std::right << std::setw(5)  << "-----"
-        << "    " << "----------------------" << '\n';
-
-    std::cout << table.str();
+    std::cout << std::format
+    (
+        "  {:<11} {:<11} {:>5}    {}\n"
+        "  {:<11} {:<11} {:>5}    {}\n",
+        "Equation", "Solver", "Iters", "Linear Solver Residual",
+        "--------", "--------", "-----", "----------------------"
+    );
 }
 
 
@@ -179,18 +138,11 @@ void Logger::residualRow
     Scalar linearSolverResidual
 )
 {
-    std::ostringstream row;
-
-    row
-        << "  "
-        << std::left  << std::setw(11) << equation
-        << std::left  << std::setw(11) << solver
-        << std::right << std::setw(5)  << iterations
-        << "    "
-        << std::scientific << std::setprecision(6)
-        << linearSolverResidual;
-
-    std::cout << row.str() << '\n';
+    std::cout << std::format
+    (
+        "  {:<11} {:<11} {:>5}    {:.6e}\n",
+        equation, solver, iterations, linearSolverResidual
+    );
 }
 
 
@@ -202,25 +154,13 @@ void Logger::subsection(const Message& title)
 
 void Logger::breakdownHeader(const Message& cornerLabel)
 {
-    std::ostringstream header;
-
-    header
-        << '\n' << "  "
-        << std::left  << std::setw(14) << cornerLabel
-        << std::right
-        << std::setw(16) << "Pressure"
-        << std::setw(16) << "Friction"
-        << std::setw(16) << "Total" << '\n';
-
-    header
-        << "  "
-        << std::left  << std::setw(14) << "----------"
-        << std::right
-        << std::setw(16) << "--------"
-        << std::setw(16) << "--------"
-        << std::setw(16) << "-----" << '\n';
-
-    std::cout << header.str();
+    std::cout << std::format
+    (
+        "\n  {:<14}{:>16}{:>16}{:>16}\n"
+        "  {:<14}{:>16}{:>16}{:>16}\n",
+        cornerLabel, "Pressure", "Friction", "Total",
+        "----------", "--------", "--------", "-----"
+    );
 }
 
 
@@ -232,18 +172,11 @@ void Logger::breakdownRow
     Scalar total
 )
 {
-    std::ostringstream row;
-
-    row
-        << "  "
-        << std::left  << std::setw(14) << label
-        << std::scientific << std::setprecision(6)
-        << std::right
-        << std::setw(16) << pressure
-        << std::setw(16) << friction
-        << std::setw(16) << total;
-
-    std::cout << row.str() << '\n';
+    std::cout << std::format
+    (
+        "  {:<14}{:>16.6e}{:>16.6e}{:>16.6e}\n",
+        label, pressure, friction, total
+    );
 }
 
 
@@ -255,31 +188,21 @@ void Logger::scalarStat
     Scalar meanVal
 )
 {
-    std::ostringstream stat;
-
-    stat
-        << "    "
-        << std::left << std::setw(7) << name
-        << std::scientific << std::setprecision(2)
-        << "min="  << minVal
-        << "  max="  << maxVal
-        << "  mean=" << meanVal;
-
-    std::cout << stat.str() << '\n';
+    std::cout << std::format
+    (
+        "    {:<7}min={:.2e}  max={:.2e}  mean={:.2e}\n",
+        name, minVal, maxVal, meanVal
+    );
 }
 
 
 void Logger::scaledResidual(const Name& name, Scalar value)
 {
-    std::ostringstream residual;
-
-    residual
-        << "    "
-        << std::left << std::setw(10) << name
-        << std::scientific << std::setprecision(6)
-        << value;
-
-    std::cout << residual.str() << '\n';
+    std::cout << std::format
+    (
+        "    {:<10}{:.6e}\n",
+        name, value
+    );
 }
 
 
@@ -291,18 +214,16 @@ void Logger::residualSummary
     const std::vector<Residuals>& residuals
 )
 {
-    std::ostringstream summary;
-
-    summary
-        << " - Mass: " << std::scientific << std::setprecision(6) << mass
-        << ", Velocity: " << velocity
-        << ", Pressure: " << pressure;
+    std::string summary = std::format
+    (
+        " - Mass: {:.6e}, Velocity: {:.6e}, Pressure: {:.6e}",
+        mass, velocity, pressure
+    );
 
     for (const Residuals& residual : residuals)
     {
-        summary
-            << ", " << residual.first << ": " << residual.second;
+        summary += std::format(", {}: {:.6e}", residual.first, residual.second);
     }
 
-    std::cout << summary.str() << '\n';
+    std::cout << summary << '\n';
 }

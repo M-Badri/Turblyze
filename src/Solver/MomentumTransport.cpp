@@ -17,10 +17,8 @@
 
 // Standard library headers
 #include <cmath>
-#include <iomanip>
+#include <format>
 #include <iostream>
-#include <sstream>
-#include <algorithm>
 
 // Project headers
 #include "Scalar.h"
@@ -223,7 +221,7 @@ void MomentumTransport::solve
         }
         else if (reportPerIteration_)
         {
-            std::cout << " Iteration " << iteration + 1 << '\n';
+            std::cout << std::format(" Iteration {}\n", iteration + 1);
         }
 
         // Previous-iteration velocity for the velocity residual
@@ -249,15 +247,11 @@ void MomentumTransport::solve
 
         const CourantNumber courant = computeCourant();
 
-        std::ostringstream courantLine;
-        courantLine
-            << std::scientific << std::setprecision(3)
-            << " Time = " << time << " s   step "
-            << step << "/" << totalSteps
-            << "   Courant max = " << courant.max
-            << " mean = " << courant.mean;
-
-        std::cout << courantLine.str() << '\n';
+        std::cout << std::format
+        (
+            " Time = {:.3e} s   step {}/{}   Courant max = {:.3e} mean = {:.3e}\n",
+            time, step, totalSteps, courant.max, courant.mean
+        );
 
         Logger::residualSummary
         (
@@ -269,16 +263,19 @@ void MomentumTransport::solve
     }
     else if (converged)
     {
-        std::cout
-            << algorithmName() << " algorithm converged in "
-            << iteration << " iterations." << '\n';
+        std::cout << std::format
+        (
+            "{} algorithm converged in {} iterations.\n",
+            algorithmName(), iteration
+        );
     }
     else
     {
-        std::cout
-            << "WARNING: " << algorithmName()
-            << " algorithm did not converge after " << maxIterations_
-            << " iterations." << '\n';
+        std::cout << std::format
+        (
+            "WARNING: {} algorithm did not converge after {} iterations.\n",
+            algorithmName(), maxIterations_
+        );
     }
 }
 

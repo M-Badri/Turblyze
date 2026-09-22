@@ -16,10 +16,10 @@
 #include "MeshChecker.h"
 
 // Standard library headers
-#include <iostream>
-#include <iomanip>
 #include <algorithm>
 #include <cmath>
+#include <format>
+#include <iostream>
 #include <numbers>
 #include <string>
 #include <vector>
@@ -57,38 +57,26 @@ void printIndicesList
     constexpr Count maxDisplay = 10;
     const Count count = std::min(indices.size(), maxDisplay);
 
-    if (indices.size() <= maxDisplay)
-    {
-        std::cout
-            << "  " << entityName << " IDs: ";
-    }
-    else
-    {
-        std::cout
-            << "  First " << maxDisplay << " "
-            << entityName << " IDs: ";
-    }
+    std::string output = (indices.size() <= maxDisplay)
+        ? std::format("  {} IDs: ", entityName)
+        : std::format("  First {} {} IDs: ", maxDisplay, entityName);
 
     for (Index i = 0; i < count; ++i)
     {
         if (i > 0)
         {
-            std::cout
-                << ", ";
+            output += ", ";
         }
 
-        std::cout
-            << indices[i];
+        output += std::format("{}", indices[i]);
     }
 
     if (indices.size() > maxDisplay)
     {
-        std::cout
-            << " ...";
+        output += " ...";
     }
 
-    std::cout
-        << '\n';
+    std::cout << output << '\n';
 }
 
 
@@ -522,124 +510,104 @@ void check(const Mesh& mesh)
         }
     }
 
-    // Store current format flags and precision
-    const auto oldFlags = std::cout.flags();
-    const auto oldPrecision = std::cout.precision();
+    std::cout << std::format
+    (
+        "\nFace Area Statistics:\n"
+        "  Minimum area: {:.6e} m² (face {})\n"
+        "  Maximum area: {:.6e} m² (face {})\n",
+        minFaceArea, minFaceIdx, maxFaceArea, maxFaceIdx
+    );
 
-    std::cout
-        << '\n' << "Face Area Statistics:" << '\n';
-
-    std::cout
-        << "  Minimum area: "
-        << std::scientific << std::setprecision(6)
-        << minFaceArea << " m² (face "
-        << minFaceIdx << ')' << '\n';
-
-    std::cout
-        << "  Maximum area: "
-        << std::scientific << std::setprecision(6)
-        << maxFaceArea << " m² (face "
-        << maxFaceIdx << ')' << '\n';
-
-    std::cout
-        << '\n' << "Cell Volume Statistics:" << '\n';
-
-    std::cout
-        << "  Minimum volume: "
-        << std::scientific << std::setprecision(6)
-        << minCellVolume << " m³ (cell "
-        << minCellIdx << ')' << '\n';
-
-    std::cout
-        << "  Maximum volume: "
-        << std::scientific << std::setprecision(6)
-        << maxCellVolume << " m³ (cell "
-        << maxCellIdx << ')' << '\n';
+    std::cout << std::format
+    (
+        "\nCell Volume Statistics:\n"
+        "  Minimum volume: {:.6e} m³ (cell {})\n"
+        "  Maximum volume: {:.6e} m³ (cell {})\n",
+        minCellVolume, minCellIdx, maxCellVolume, maxCellIdx
+    );
 
     if (!invertedCells.empty())
     {
         FatalError
         (
-            std::to_string(invertedCells.size())
-          + " inverted cells (negative volume) detected"
+            std::format
+            (
+                "{} inverted cells (negative volume) detected",
+                invertedCells.size()
+            )
         );
     }
 
     // Non-orthogonality statistics
-    std::cout
-        << '\n' << "Non-Orthogonality Statistics:" << '\n';
-
-    std::cout
-        << std::fixed << std::setprecision(2);
+    std::cout << "\nNon-Orthogonality Statistics:\n";
 
     if (nonOrthCount > 0)
     {
-        std::cout
-            << "  Maximum: " << maxNonOrthogonality
-            << "° (face " << maxNonOrthFaceIdx << ")" << '\n';
-
-        std::cout
-            << "  Average: " << avgNonOrthogonality << "°" << '\n';
+        std::cout << std::format
+        (
+            "  Maximum: {:.2f}° (face {})\n"
+            "  Average: {:.2f}°\n",
+            maxNonOrthogonality, maxNonOrthFaceIdx, avgNonOrthogonality
+        );
     }
     else
     {
-        std::cout
-            << "  No internal faces to measure" << '\n';
+        std::cout << "  No internal faces to measure\n";
     }
 
     if (!severeNonOrthFaces.empty())
     {
         Warning
         (
-            std::to_string(severeNonOrthFaces.size())
-          + " faces with non-orthogonality > "
-          + std::to_string(maxNonOrthThreshold) + "°"
+            std::format
+            (
+                "{} faces with non-orthogonality > {}°",
+                severeNonOrthFaces.size(), maxNonOrthThreshold
+            )
         );
 
         printIndicesList(severeNonOrthFaces, "Face");
     }
 
     // Skewness statistics
-    std::cout
-        << '\n' << "Skewness Statistics:" << '\n';
-
-    std::cout
-        << std::fixed << std::setprecision(3);
-
-    std::cout
-        << "  Maximum: " << maxSkewness << " (face "
-        << maxSkewFaceIdx << ')' << '\n';
+    std::cout << std::format
+    (
+        "\nSkewness Statistics:\n"
+        "  Maximum: {:.3f} (face {})\n",
+        maxSkewness, maxSkewFaceIdx
+    );
 
     if (!highSkewFaces.empty())
     {
         Warning
         (
-            std::to_string(highSkewFaces.size())
-          + " faces with skewness > "
-          + std::to_string(maxSkewThreshold)
+            std::format
+            (
+                "{} faces with skewness > {}",
+                highSkewFaces.size(), maxSkewThreshold
+            )
         );
 
         printIndicesList(highSkewFaces, "Face");
     }
 
     // Aspect ratio statistics
-    std::cout
-        << '\n' << "Aspect Ratio Statistics:" << '\n';
-
-    std::cout
-        << std::fixed << std::setprecision(1);
-
-    std::cout
-        << "  Maximum: " << maxAspectRatio << " (cell "
-        << maxAspectCellIdx << ')' << '\n';
+    std::cout << std::format
+    (
+        "\nAspect Ratio Statistics:\n"
+        "  Maximum: {:.1f} (cell {})\n",
+        maxAspectRatio, maxAspectCellIdx
+    );
 
     if (!highAspectCells.empty())
     {
         Warning
         (
-            std::to_string(highAspectCells.size())
-          + " cells with aspect ratio > "
-          + std::to_string(maxAspectThreshold)
+            std::format
+            (
+                "{} cells with aspect ratio > {}",
+                highAspectCells.size(), maxAspectThreshold
+            )
         );
 
         printIndicesList(highAspectCells, "Cell");
@@ -648,43 +616,30 @@ void check(const Mesh& mesh)
     // Quality warnings for small areas/volumes
     if (!smallAreaFaces.empty())
     {
-        std::cout
-            << '\n' << "Quality Check - Small Face Areas:" << '\n';
-
-        std::cout
-            << "  Found " << smallAreaFaces.size() << " faces with area < ";
-
-        std::cout
-            << std::scientific
-            << std::setprecision(0);
-
-        std::cout
-            << minArea << " m²" << '\n';
+        std::cout << std::format
+        (
+            "\nQuality Check - Small Face Areas:\n"
+            "  Found {} faces with area < {:.0e} m²\n",
+            smallAreaFaces.size(), minArea
+        );
 
         printIndicesList(smallAreaFaces, "Face");
     }
 
     if (!smallVolumeCells.empty())
     {
-        std::cout
-            << '\n' << "Quality Check - Small Cell Volumes:" << '\n';
-
-        std::cout
-            << "  Found " << smallVolumeCells.size()
-            << " cells with volume < ";
-
-        std::cout
-            << std::scientific << std::setprecision(0);
-
-        std::cout
-            << minVolume << " m³" << '\n';
+        std::cout << std::format
+        (
+            "\nQuality Check - Small Cell Volumes:\n"
+            "  Found {} cells with volume < {:.0e} m³\n",
+            smallVolumeCells.size(), minVolume
+        );
 
         printIndicesList(smallVolumeCells, "Cell");
     }
 
     // Overall mesh quality summary
-    std::cout
-        << "\n--- Mesh Quality Summary ---" << '\n';
+    std::cout << "\n--- Mesh Quality Summary ---\n";
 
     bool goodQuality = true;
 
@@ -692,9 +647,11 @@ void check(const Mesh& mesh)
     {
         Warning
         (
-            "Non-orthogonality exceeds "
-          + std::to_string(maxNonOrthThreshold)
-          + "° threshold"
+            std::format
+            (
+                "Non-orthogonality exceeds {}° threshold",
+                maxNonOrthThreshold
+            )
         );
         goodQuality = false;
     }
@@ -703,9 +660,11 @@ void check(const Mesh& mesh)
     {
         Warning
         (
-            "Skewness exceeds "
-          + std::to_string(maxSkewThreshold)
-          + " threshold"
+            std::format
+            (
+                "Skewness exceeds {} threshold",
+                maxSkewThreshold
+            )
         );
         goodQuality = false;
     }
@@ -714,9 +673,11 @@ void check(const Mesh& mesh)
     {
         Warning
         (
-            "Aspect ratio exceeds "
-          + std::to_string(maxAspectThreshold)
-          + " threshold"
+            std::format
+            (
+                "Aspect ratio exceeds {} threshold",
+                maxAspectThreshold
+            )
         );
         goodQuality = false;
     }
@@ -729,14 +690,8 @@ void check(const Mesh& mesh)
      && goodQuality
     )
     {
-        std::cout
-            << "DONE: All mesh quality metrics within"
-            << " acceptable ranges" << '\n';
+        std::cout << "DONE: All mesh quality metrics within acceptable ranges\n";
     }
-
-    // Restore original format flags and precision
-    std::cout.flags(oldFlags);
-    std::cout.precision(oldPrecision);
 }
 
 } // namespace MeshChecker

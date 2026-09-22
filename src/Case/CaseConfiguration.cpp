@@ -16,6 +16,7 @@
 #include "CaseConfiguration.h"
 
 // Standard library headers
+#include <format>
 #include <iostream>
 
 // Project headers
@@ -263,27 +264,35 @@ void readConvectionSchemes
 
     if (config.debug)
     {
-        std::cout
-            << "Default convection scheme: "
-            << config.schemes.defaultScheme << '\n';
+        std::cout << std::format
+        (
+            "Default convection scheme: {}\n",
+            config.schemes.defaultScheme
+        );
 
         if (!config.schemes.momentumScheme.empty())
         {
-            std::cout
-                << "Momentum convection scheme: "
-                << config.schemes.momentumScheme << '\n';
+            std::cout << std::format
+            (
+                "Momentum convection scheme: {}\n",
+                config.schemes.momentumScheme
+            );
         }
         if (!config.schemes.kScheme.empty())
         {
-            std::cout
-                << "k convection scheme: "
-                << config.schemes.kScheme << '\n';
+            std::cout << std::format
+            (
+                "k convection scheme: {}\n",
+                config.schemes.kScheme
+            );
         }
         if (!config.schemes.omegaScheme.empty())
         {
-            std::cout
-                << "omega convection scheme: "
-                << config.schemes.omegaScheme << '\n';
+            std::cout << std::format
+            (
+                "omega convection scheme: {}\n",
+                config.schemes.omegaScheme
+            );
         }
     }
 }

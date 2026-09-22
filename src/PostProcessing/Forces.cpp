@@ -270,9 +270,9 @@ void reportForces
         (
             "Aerodynamic forces\n"
             "Patch          : {}\n"
-            "Drag direction : {}\n"
-            "Lift direction : {}\n"
-            "Reference U    : {}\n"
+            "Drag direction : ({:.6f}, {:.6f}, {:.6f})\n"
+            "Lift direction : ({:.6f}, {:.6f}, {:.6f})\n"
+            "Reference U    : ({:.6f}, {:.6f}, {:.6f})\n"
             "\n"
             "{:<12}{:>16}{:>16}{:>16}\n"
             "{:<12}{:>16.6e}{:>16.6e}{:>16.6e}\n"
@@ -283,9 +283,11 @@ void reportForces
             "{:<12}{:>16.6e}{:>16.6e}{:>16.6e}\n"
             "{:<12}{:>16.6e}{:>16.6e}{:>16.6e}\n",
             config.forcesPatch,
-            dragDir,
-            liftDir,
-            config.referenceVelocity,
+            dragDir.x(), dragDir.y(), dragDir.z(),
+            liftDir.x(), liftDir.y(), liftDir.z(),
+            config.referenceVelocity.x(),
+            config.referenceVelocity.y(),
+            config.referenceVelocity.z(),
             "Force", "Pressure", "Friction", "Total",
             "Drag [N]", pressureDrag, frictionDrag, totalDrag,
             "Lift [N]", pressureLift, frictionLift, totalLift,

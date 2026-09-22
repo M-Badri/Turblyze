@@ -73,8 +73,6 @@ endfunction()
 
 # Source directories
 add_library(turblyze_core OBJECT
-    src/Primitives/Vector.cpp
-    src/Primitives/Tensor.cpp
     src/Primitives/Logger.cpp
     src/Mesh/Face.cpp
     src/Mesh/Cell.cpp

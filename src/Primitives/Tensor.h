@@ -20,7 +20,6 @@
 
 // Standard library headers
 #include <cmath>
-#include <iosfwd>
 
 // Project headers
 #include "Scalar.h"
@@ -322,6 +321,3 @@ inline Tensor operator*(Scalar s, const Tensor& T) noexcept
 {
     return T * s;
 }
-
-/// Stream output operator for Tensor
-std::ostream& operator<<(std::ostream& os, const Tensor& T);

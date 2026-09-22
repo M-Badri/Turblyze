@@ -21,7 +21,6 @@
 
 // Standard library headers
 #include <cmath>
-#include <iosfwd>
 
 // Project headers
 #include "Scalar.h"
@@ -203,6 +202,3 @@ inline Vector operator*(Scalar s, const Vector& p) noexcept
 {
     return p * s;
 }
-
-/// Stream output operator for Vector
-std::ostream& operator<<(std::ostream& os, const Vector& p);

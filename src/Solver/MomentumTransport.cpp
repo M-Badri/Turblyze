@@ -399,64 +399,87 @@ bool MomentumTransport::checkConvergence()
     const Scalar velocityResidual = this->velocityResidual();
     const Scalar pressureResidual = this->pressureResidual();
 
-    // Store first-iteration references for scaling
-    if (massImbalance0_ < vSmallValue)
-    {
-        massImbalance0_ = massImbalance;
-        velocityResidual0_ = velocityResidual;
-        pressureResidual0_ = pressureResidual;
+    Scalar scaledMass = massImbalance;
+    Scalar scaledVelocity = velocityResidual;
+    Scalar scaledPressure = pressureResidual;
+    std::vector<Logger::Residuals> scaledTurbulenceResiduals;
+    bool converged = false;
 
-        turbulenceResidual0_.clear();
-        for (const auto& residual : turbulenceResiduals)
+    if (isTransient())
+    {
+        // In transient simulations, report the inherent dimensionless residuals directly.
+        converged =
+            (scaledMass < tolerance_)
+         && (scaledVelocity < tolerance_)
+         && (scaledPressure < tolerance_);
+
+        if (turbulence_.isTurbulent())
         {
-            turbulenceResidual0_.push_back(residual.second);
+            scaledTurbulenceResiduals.reserve(turbulenceResiduals.size());
+            for (const auto& residual : turbulenceResiduals)
+            {
+                scaledTurbulenceResiduals.push_back
+                (
+                    {residual.first, residual.second}
+                );
+                converged = converged && (residual.second < tolerance_);
+            }
         }
     }
-
-    // Scale by first-iteration values
-    const Scalar scaledMass = massImbalance / (massImbalance0_ + vSmallValue);
-
-    const Scalar scaledVelocity =
-        velocityResidual / (velocityResidual0_ + vSmallValue);
-
-    const Scalar scaledPressure =
-        pressureResidual / (pressureResidual0_ + vSmallValue);
-
-    bool converged =
-        (scaledMass < tolerance_)
-     && (scaledVelocity < tolerance_)
-     && (scaledPressure < tolerance_);
-
-    std::vector<Logger::Residuals> scaledTurbulenceResiduals;
-
-    if (turbulence_.isTurbulent())
+    else
     {
-        const Count residualCount =
-            std::min
-            (
-                turbulenceResiduals.size(),
-                turbulenceResidual0_.size()
-            );
-
-        scaledTurbulenceResiduals.reserve(residualCount);
-
-        for (Index i = 0; i < residualCount; ++i)
+        // Steady-state simulations (e.g. SIMPLE): scale relative to the initial iteration
+        if (massImbalance0_ < vSmallValue)
         {
-            const Scalar scaled =
-                turbulenceResiduals[i].second
-              / (turbulenceResidual0_[i] + vSmallValue);
+            massImbalance0_ = massImbalance;
+            velocityResidual0_ = velocityResidual;
+            pressureResidual0_ = pressureResidual;
 
-            scaledTurbulenceResiduals.push_back
-            (
-                {turbulenceResiduals[i].first, scaled}
-            );
-
-            converged = converged && (scaled < tolerance_);
+            turbulenceResidual0_.clear();
+            for (const auto& residual : turbulenceResiduals)
+            {
+                turbulenceResidual0_.push_back(residual.second);
+            }
         }
 
-        if (residualCount != turbulenceResiduals.size())
+        scaledMass = massImbalance / (massImbalance0_ + vSmallValue);
+        scaledVelocity = velocityResidual / (velocityResidual0_ + vSmallValue);
+        scaledPressure = pressureResidual / (pressureResidual0_ + vSmallValue);
+
+        converged =
+            (scaledMass < tolerance_)
+         && (scaledVelocity < tolerance_)
+         && (scaledPressure < tolerance_);
+
+        if (turbulence_.isTurbulent())
         {
-            converged = false;
+            const Count residualCount =
+                std::min
+                (
+                    turbulenceResiduals.size(),
+                    turbulenceResidual0_.size()
+                );
+
+            scaledTurbulenceResiduals.reserve(residualCount);
+
+            for (Index i = 0; i < residualCount; ++i)
+            {
+                const Scalar scaled =
+                    turbulenceResiduals[i].second
+                  / (turbulenceResidual0_[i] + vSmallValue);
+
+                scaledTurbulenceResiduals.push_back
+                (
+                    {turbulenceResiduals[i].first, scaled}
+                );
+
+                converged = converged && (scaled < tolerance_);
+            }
+
+            if (residualCount != turbulenceResiduals.size())
+            {
+                converged = false;
+            }
         }
     }
 
@@ -468,7 +491,7 @@ bool MomentumTransport::checkConvergence()
 
     if (debug_)
     {
-        Logger::subsection("Scaled residuals");
+        Logger::subsection(isTransient() ? "Residuals" : "Scaled residuals");
         Logger::scaledResidual("mass",     scaledMass);
         Logger::scaledResidual("velocity", scaledVelocity);
         Logger::scaledResidual("pressure", scaledPressure);

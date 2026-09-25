@@ -20,10 +20,10 @@
 
 // *************************** Non-Member Functions ***************************
 
-Name fieldToString(Field field) noexcept
+Name fieldToString(Field f) noexcept
 {
     using enum Field;
-    switch (field)
+    switch (f)
     {
         case Ux:    return "Ux";
         case Uy:    return "Uy";

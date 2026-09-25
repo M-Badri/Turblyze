@@ -8,13 +8,6 @@
  ------------------------------------------------------------------------------
  * @file FaceData.h
  * @brief Template container for face-centered field data storage
- *
- * @details This header defines a generic template class for storing field
- * variables at face centers in finite volume meshes. The container manages
- * face-based data including mass fluxes, face velocities, and face-centered
- * gradients
- *
- * @class FaceData<T>
  *****************************************************************************/
 
 #pragma once
@@ -72,39 +65,6 @@ public:
     [[nodiscard]] Count size() const noexcept
     {
         return internalField_.size();
-    }
-
-    /// Get pointer to field storage
-    [[nodiscard]] T* data() noexcept
-    {
-        return internalField_.data();
-    }
-
-    /// Get const pointer to field storage
-    [[nodiscard]] const T* data() const noexcept
-    {
-        return internalField_.data();
-    }
-
-    /// Iterator access (range-based for loops)
-    [[nodiscard]] auto begin() noexcept
-    {
-        return internalField_.begin();
-    }
-
-    [[nodiscard]] auto end() noexcept
-    {
-        return internalField_.end();
-    }
-
-    [[nodiscard]] auto begin() const noexcept
-    {
-        return internalField_.begin();
-    }
-
-    [[nodiscard]] auto end() const noexcept
-    {
-        return internalField_.end();
     }
 
 // ***************************** Operator Methods *****************************

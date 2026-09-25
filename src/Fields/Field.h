@@ -11,8 +11,7 @@
  *
  * @details Defines the Field enumeration used to identify solver fields
  * (velocity components, pressure, turbulence quantities) in boundary-condition
- * storage, BC lookups, and gradient reconstruction. It replaces error-prone
- * field-name string keys with a compiler-checked type.
+ * storage, BC lookups, and gradient reconstruction.
  *****************************************************************************/
 
 #pragma once
@@ -38,4 +37,4 @@ enum class Field
 // *************************** Non-Member Functions ***************************
 
 /// Human-readable name of a field, for diagnostics and logging
-[[nodiscard]] Name fieldToString(Field field) noexcept;
+[[nodiscard]] Name fieldToString(Field f) noexcept;

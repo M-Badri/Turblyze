@@ -9,17 +9,10 @@
  * @file Face.h
  * @brief Represents a face in the computational mesh
  *
- * @details This header defines the Face class, which is fundamental in
- * the finite volume discretization.
- * A face represents a surface defined by a sequence of nodes (vertices)
- * and serves as the boundary between two control volumes (cells) or between a
- * cell and the domain boundary.
- *
- * @class Face
- * - Connectivity (nodes, owner cell, neighbor cell)
- * - Face properties (centroid, area, normal vector)
- * - Distance vectors for interpolations and gradient calculations
- * - Boundary handling (internal and boundary faces)
+ * @details The face is defined by a sequence of nodes (vertices). Each face
+ * has an owner cell and may have a neighbor cell (for internal faces). In 
+ * addition to connectivity, the face stores geometric properties such as
+ * centroid, normal, and area.
  *****************************************************************************/
 
 #pragma once
@@ -31,11 +24,11 @@
 #include <utility>
 
 // Project headers
+#include "Integer.h"
 #include "Scalar.h"
 #include "Vector.h"
 #include "BoundaryPatch.h"
 #include "MeshContainers.h"
-#include "Integer.h"
 
 // *************************** Forward Declarations ***************************
 

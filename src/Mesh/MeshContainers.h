@@ -7,14 +7,13 @@
 
  ------------------------------------------------------------------------------
  * @file MeshContainers.h
- * @brief Intent-revealing aliases for mesh collections
+ * @brief Intent-revealing aliases for mesh containers
  *****************************************************************************/
 
 #pragma once
 
 // ********************************** Headers *********************************
 
-// Standard library headers
 #include <vector>
 
 // *************************** Forward Declarations ***************************

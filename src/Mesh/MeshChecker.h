@@ -35,6 +35,6 @@ namespace MeshChecker
 {
 
 /// Run mesh quality checks and report statistics
-void check(const Mesh& mesh);
+void check(const Mesh& m);
 
 }

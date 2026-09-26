@@ -7,18 +7,12 @@
 
  ------------------------------------------------------------------------------
  * @file Mesh.h
- * @brief Owning mesh data and lightweight view provider
+ * @brief Owning mesh data
  *
  * @details This header defines the Mesh class, which owns all mesh data
  * (nodes, faces, cells, and boundary patches) and provides list-ref views
  * to consumers. It also manages cell and face counts used by field
  * containers at construction time.
- *
- * @class Mesh
- * - Owns nodes, faces, cells, and boundary patches via mesh list members
- * - Const list-ref accessors for read-only consumers (const Mesh&)
- * - Mutable list-ref accessors for the mesh preparation phase
- * - Static retrieval of cell and face counts
  *****************************************************************************/
 
 #pragma once
@@ -29,14 +23,15 @@
 #include <utility>
 
 // Project headers
-#include "MeshContainers.h"
+#include "Integer.h"
+#include "Scalar.h"
 #include "Vector.h"
 #include "Face.h"
 #include "Cell.h"
 #include "BoundaryPatch.h"
-#include "ErrorHandler.h"
-#include "Integer.h"
 #include "ProcessorPatch.h"
+#include "MeshContainers.h"
+#include "ErrorHandler.h"
 
 // ******************************** class Mesh ********************************
 

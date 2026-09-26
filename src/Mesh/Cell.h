@@ -9,16 +9,9 @@
  * @file Cell.h
  * @brief Represents a computational cell in the mesh
  *
- * @details This header defines the Cell class, which represents a finite
- * control volume in the computational mesh. The cell is the primary entity
- * where flow variables (pressure, velocity, etc.) are stored and solved.
- * The cell is defined by a collection of bounding faces that form a closed
- * volume.
- *
- * @class Cell
- * - Topological connectivity (bounding faces, neighboring cells)
- * - Orientation data (face alignment signs relative to cell)
- * - Cell properties (centroid, volume)
+ * @details The finite volume cell is defined by a set of bounding faces that
+ * form a closed volume. In addition to the connectivity data, the cell stores
+ * geometric properties such as centroid and volume. 
  *****************************************************************************/
 
 #pragma once
@@ -31,10 +24,10 @@
 #include <utility>
 
 // Project headers
+#include "Integer.h"
 #include "Scalar.h"
 #include "Vector.h"
 #include "Face.h"
-#include "Integer.h"
 
 // ******************************** class Cell ********************************
 

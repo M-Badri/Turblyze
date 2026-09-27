@@ -57,7 +57,7 @@ void registerDiffusionBoundaries(BoundaryConditions& bc, Mesh& mesh)
         bc.addPatch(patch);
     }
 
-    bc.linkFaces(mesh.faces());
+    bc.linkFaces(mesh);
 
     bc.setBoundaryType
     (

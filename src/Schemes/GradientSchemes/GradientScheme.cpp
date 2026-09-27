@@ -133,8 +133,8 @@ void GradientScheme::limitGradient
                 bcManager_.boundaryType(field, bIdx).faceValue
                 (
                     phi[f.ownerCell()],
-                    bcManager_.normalDistance(bIdx),
-                    bcManager_.normal(bIdx),
+                    dot(mesh_.dPf(f), f.normal()),
+                    f.normal(),
                     bcManager_.ownerVelocity(bIdx)
                 );
             phiMin = std::min(phiMin, phiBound);
@@ -204,8 +204,8 @@ Vector GradientScheme::averageFaceGradient
     const Vector& gradPhiN
 ) const
 {
-    const Scalar dPf = internalFace.dPfMag();
-    const Scalar dNf = internalFace.dNfMag().value();
+    const Scalar dPf = magnitude(mesh_.dPf(internalFace));
+    const Scalar dNf = magnitude(mesh_.dNf(internalFace));
     const Scalar totalDist = dPf + dNf;
 
     const Scalar gP = dNf / (totalDist + vSmallValue);

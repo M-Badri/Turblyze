@@ -160,22 +160,22 @@ AeroForces computeForces
             ++faceIdx
         )
         {
-            const Face& face = faces[faceIdx];
-            const Index cellIdx = face.ownerCell();
-            const Vector& normal = face.normal();
+            const Face& f = faces[faceIdx];
+            const Index cellIdx = f.ownerCell();
+            const Vector& normal = f.normal();
 
             // Pressure force from the kinematic pressure
-            const Index bIdx = bcManager.boundaryIdx(face.idx());
+            const Index bIdx = bcManager.boundaryIdx(f.idx());
             const Scalar pressureFace =
                 bcManager.boundaryType(Field::p, bIdx).faceValue
                 (
                     pressure[cellIdx],
-                    bcManager.normalDistance(bIdx),
-                    bcManager.normal(bIdx),
+                    dot(mesh.dPf(f), normal),
+                    normal,
                     bcManager.ownerVelocity(bIdx)
                 );
             const Vector pressureContribution =
-                (config.rho * pressureFace * face.projectedArea()) * normal;
+                (config.rho * pressureFace * f.projectedArea()) * normal;
             pressureForceSum += pressureContribution;
 
             // Skin-friction force
@@ -190,10 +190,10 @@ AeroForces computeForces
                 const Vector shearDirection =
                     tangentVelocity / tangentMagnitude;
                 const Scalar shearStress =
-                    config.rho * wallShearStress[face.idx()];
+                    config.rho * wallShearStress[f.idx()];
 
                 const Vector frictionContribution =
-                    (shearStress * face.contactArea()) * shearDirection;
+                    (shearStress * f.contactArea()) * shearDirection;
                 frictionForceSum += frictionContribution;
             }
         }

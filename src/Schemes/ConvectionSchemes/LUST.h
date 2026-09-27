@@ -16,11 +16,6 @@
  * The standard blending parameter is alpha = 0.75 (75% CDS + 25% LUD). This
  * provides low numerical dissipation for scale-resolving simulations while
  * damping high-frequency dispersion errors.
- *
- * @class LUST
- * - Blended second-order convection discretization
- * - Configurable blending factor alpha (default 0.75)
- * - Deferred correction for stability within segregated momentum solves
  *****************************************************************************/
 
 #pragma once
@@ -48,7 +43,8 @@ public:
     /// Compute deferred correction term
     [[nodiscard]] Scalar correction
     (
-        const Face& face,
+        const Mesh& m,
+        const Face& f,
         const ScalarField& phi,
         const Vector& gradPhiP,
         const Vector& gradPhiN,

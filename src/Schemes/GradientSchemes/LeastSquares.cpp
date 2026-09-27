@@ -67,21 +67,21 @@ Vector LeastSquares::cellGradient
     // Part 2: Boundary faces contribution to ATb
     for (Index faceIdx : cell.faceIndices())
     {
-        const Face& face = mesh().faces()[faceIdx];
+        const Face& f = mesh().faces()[faceIdx];
 
-        if (!face.isBoundary()) continue;
+        if (!f.isBoundary()) continue;
 
-        const Vector r = face.centroid() - cell.centroid();
+        const Vector r = f.centroid() - cell.centroid();
         const Scalar rMagSqr = magnitudeSquared(r);
         const Scalar w = S(1.0) / (rMagSqr + smallValue);
 
-        const Index bIdx = bcManager().boundaryIdx(face.idx());
+        const Index bIdx = bcManager().boundaryIdx(f.idx());
         const Scalar phiBoundary =
             bcManager().boundaryType(field, bIdx).faceValue
             (
-                phi[face.ownerCell()],
-                bcManager().normalDistance(bIdx),
-                bcManager().normal(bIdx),
+                phi[f.ownerCell()],
+                dot(mesh().dPf(f), f.normal()),
+                f.normal(),
                 bcManager().ownerVelocity(bIdx)
             );
 
@@ -144,11 +144,11 @@ void LeastSquares::precomputeInverseATA()
         // Boundary faces contribution (purely geometric)
         for (Index faceIdx : cell.faceIndices())
         {
-            const Face& face = mesh().faces()[faceIdx];
+            const Face& f = mesh().faces()[faceIdx];
 
-            if (!face.isBoundary()) continue;
+            if (!f.isBoundary()) continue;
 
-            const Vector r = face.centroid() - cell.centroid();
+            const Vector r = f.centroid() - cell.centroid();
             const Scalar rMagSqr = magnitudeSquared(r);
             const Scalar w = S(1.0) / (rMagSqr + smallValue);
 

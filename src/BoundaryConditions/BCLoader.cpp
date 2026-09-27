@@ -200,7 +200,7 @@ void load
         bcManager.addPatch(patch);
     }
 
-    bcManager.linkFaces(mesh.faces());
+    bcManager.linkFaces(mesh);
 
     for (const auto& face : mesh.faces())
     {

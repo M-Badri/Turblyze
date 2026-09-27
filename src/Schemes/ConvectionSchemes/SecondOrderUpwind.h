@@ -29,7 +29,8 @@ public:
 
     [[nodiscard]] Scalar correction
     (
-        const Face& face,
+        const Mesh& m,
+        const Face& f,
         const ScalarField& phi,
         const Vector& gradPhiP,
         const Vector& gradPhiN,

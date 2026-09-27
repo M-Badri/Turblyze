@@ -129,14 +129,13 @@ TEST_CASE("Two-cell box face distances", "[mesh]")
 
     REQUIRE_THAT
     (
-        internalFace->dPfMag(),
+        magnitude(box.mesh().dPf(*internalFace)),
         WithinRel(S(0.5), TestTolerances::relTight)
     );
 
-    REQUIRE(internalFace->dNfMag().has_value());
     REQUIRE_THAT
     (
-        internalFace->dNfMag().value(),
+        magnitude(box.mesh().dNf(*internalFace)),
         WithinRel(S(0.5), TestTolerances::relTight)
     );
 

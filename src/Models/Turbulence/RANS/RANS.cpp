@@ -236,7 +236,7 @@ void RANS::cellToFaceDiffusion
         }
         else
         {
-            faceGamma[faceIdx] = interpolateToFace(face, cellGamma);
+            faceGamma[faceIdx] = interpolateToFace(mesh_, face, cellGamma);
         }
     }
 }
@@ -399,7 +399,7 @@ void RANS::initializeWallFunctionGeometry
         // Cache the owner-cell wall-normal distance
         y_[face.idx()] = std::max
         (
-            std::abs(dot(face.dPf(), face.normal())),
+            std::abs(dot(mesh_.dPf(face), face.normal())),
             vSmallValue
         );
     }

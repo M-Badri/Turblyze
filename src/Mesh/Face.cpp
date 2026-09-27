@@ -177,19 +177,3 @@ FaceIntegrals Face::geometricProperties
 
     return integrals;
 }
-
-
-void Face::distances(const CellList& allCells)
-{
-    dPf_ = centroid_ - allCells[ownerCell_].centroid();
-    dPfMag_ = magnitude(dPf_);
-
-    // Calculate dNf only for internal faces
-    if (!isBoundary())
-    {
-        const Index N = neighborCell_.value();
-        const Vector dNfVec = centroid_ - allCells[N].centroid();
-        dNf_ = dNfVec;
-        dNfMag_ = magnitude(dNfVec);
-    }
-}

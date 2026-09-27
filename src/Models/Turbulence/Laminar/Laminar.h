@@ -115,7 +115,7 @@ public:
             const Scalar wallDistance =
                 std::max
                 (
-                    std::abs(dot(face.dPf(), normal)),
+                    std::abs(dot(mesh_.dPf(face), normal)),
                     vSmallValue
                 );
 

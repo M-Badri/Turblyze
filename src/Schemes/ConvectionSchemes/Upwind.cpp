@@ -18,6 +18,7 @@
 
 Scalar Upwind::correction
 (
+    const Mesh& /*mesh*/,
     const Face& /*face*/,
     const ScalarField& /*phi*/,
     const Vector& /*gradPhiP*/,

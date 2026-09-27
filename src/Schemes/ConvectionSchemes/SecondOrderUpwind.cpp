@@ -13,12 +13,14 @@
 // ********************************** Headers *********************************
 
 #include "SecondOrderUpwind.h"
+#include "Mesh.h"
 
 // ****************************** Public Methods ******************************
 
 Scalar SecondOrderUpwind::correction
 (
-    const Face& face,
+    const Mesh& m,
+    const Face& f,
     const ScalarField& /*phi*/,
     const Vector& gradPhiP,
     const Vector& gradPhiN,
@@ -28,8 +30,8 @@ Scalar SecondOrderUpwind::correction
     // Deferred correction: flowRate * grad(phi)_upwind dot d_upwind_to_face
     const Scalar gradientProjection =
         (flowRate >= S(0.0))
-      ? dot(gradPhiP, face.dPf())
-      : dot(gradPhiN, face.dNf().value());
+      ? dot(gradPhiP, m.dPf(f))
+      : dot(gradPhiN, m.dNf(f));
 
     return flowRate * gradientProjection;
 }

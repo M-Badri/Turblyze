@@ -12,14 +12,19 @@
 
 // ********************************** Headers *********************************
 
+// Implementation header
 #include "LUST.h"
+
+// Project headers
+#include "Mesh.h"
 #include "LinearInterpolation.h"
 
 // ****************************** Public Methods ******************************
 
 Scalar LUST::correction
 (
-    const Face& face,
+    const Mesh& m,
+    const Face& f,
     const ScalarField& phi,
     const Vector& gradPhiP,
     const Vector& gradPhiN,
@@ -27,10 +32,10 @@ Scalar LUST::correction
 ) const
 {
     // 1. Central Difference deferred correction:
-    const Scalar phiFaceCentral = interpolateToFace(face, phi);
+    const Scalar phiFaceCentral = interpolateToFace(m, f, phi);
 
     const Index upwindCell =
-        (flowRate >= S(0.0)) ? face.ownerCell() : face.neighborCell().value();
+        (flowRate >= S(0.0)) ? f.ownerCell() : f.neighborCell().value();
 
     const Scalar phiFaceUDS = phi[upwindCell];
     const Scalar corrCDS = flowRate * (phiFaceCentral - phiFaceUDS);
@@ -38,8 +43,8 @@ Scalar LUST::correction
     // 2. Second-Order Linear Upwind deferred correction:
     const Scalar gradientProjection =
         (flowRate >= S(0.0))
-      ? dot(gradPhiP, face.dPf())
-      : dot(gradPhiN, face.dNf().value());
+      ? dot(gradPhiP, m.dPf(f))
+      : dot(gradPhiN, m.dNf(f));
 
     const Scalar corrLU = flowRate * gradientProjection;
 

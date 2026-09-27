@@ -67,16 +67,6 @@ void prepareGeometry(Mesh& mesh, bool debug)
         std::cout
             << "Geometric properties calculated for cells." << '\n';
     }
-
-    for (Index faceIdx = 0; faceIdx < faces.size(); ++faceIdx)
-    {
-        faces[faceIdx].distances(cells);
-    }
-    if (debug)
-    {
-        std::cout
-            << "Distance properties calculated for faces." << '\n';
-    }
 }
 
 

@@ -19,17 +19,18 @@
 
 Scalar CentralDifference::correction
 (
-    const Face& face,
+    const Mesh& m,
+    const Face& f,
     const ScalarField& phi,
     const Vector& /*gradPhiP*/,
     const Vector& /*gradPhiN*/,
     Scalar flowRate
 ) const
 {
-    const Scalar phiFaceCentral = interpolateToFace(face, phi);
+    const Scalar phiFaceCentral = interpolateToFace(m, f, phi);
 
     const Index upwindCell =
-        (flowRate >= S(0.0)) ? face.ownerCell() : face.neighborCell().value();
+        (flowRate >= S(0.0)) ? f.ownerCell() : f.neighborCell().value();
 
     const Scalar phiFaceUDS = phi[upwindCell];
 

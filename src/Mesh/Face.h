@@ -178,30 +178,6 @@ public:
         return contactArea_;
     }
 
-    /// Get owner cell distance vector
-    [[nodiscard]] const Vector& dPf() const noexcept
-    {
-        return dPf_;
-    }
-
-    /// Get neighbor cell distance vector
-    [[nodiscard]] const std::optional<Vector>& dNf() const noexcept
-    {
-        return dNf_;
-    }
-
-    /// Get owner cell distance magnitude
-    [[nodiscard]] Scalar dPfMag() const noexcept
-    {
-        return dPfMag_;
-    }
-
-    /// Get neighbor cell distance magnitude
-    [[nodiscard]] const std::optional<Scalar>& dNfMag() const noexcept
-    {
-        return dNfMag_;
-    }
-
     /// Get the boundary patch this face belongs to
     [[nodiscard]] const BoundaryPatch* patch() const noexcept
     {
@@ -221,9 +197,6 @@ public:
     (
         const NodeList& allNodes
     );
-
-    /// Calculate distance properties of the face
-    void distances(const CellList& allCells);
 
 // ****************************** Private Members *****************************
 
@@ -252,18 +225,6 @@ private:
 
     /// Contact area (For shear stress calculations)
     Scalar contactArea_ = S(0.0);
-
-    /// Distance vector from owner cell center to face center
-    Vector dPf_;
-
-    /// Distance vector from neighbor cell center to face center
-    std::optional<Vector> dNf_;
-
-    /// Magnitude of d_Pf
-    Scalar dPfMag_ = S(0.0);
-
-    /// Magnitude of d_Nf
-    std::optional<Scalar> dNfMag_;
 
     /// Owning boundary patch (nullptr for internal or unlinked faces)
     const BoundaryPatch* patch_ = nullptr;

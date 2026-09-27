@@ -66,7 +66,7 @@ TEST_CASE("Constant field interpolates to itself", "[schemes]")
 
     REQUIRE_THAT
     (
-        interpolateToFace(face, phi),
+        interpolateToFace(box.mesh(), face, phi),
         WithinAbs(S(7.5), TestTolerances::absTight)
     );
 }
@@ -86,7 +86,7 @@ TEST_CASE("Equal distances give the midpoint", "[schemes]")
 
     REQUIRE_THAT
     (
-        interpolateToFace(face, phi),
+        interpolateToFace(box.mesh(), face, phi),
         WithinRel(S(2.0), TestTolerances::relTight)
     );
 }
@@ -111,7 +111,7 @@ TEST_CASE("Linear field is exact at the face", "[schemes]")
 
     REQUIRE_THAT
     (
-        interpolateToFace(face, phi),
+        interpolateToFace(box.mesh(), face, phi),
         WithinRel(S(1.0), TestTolerances::relTight)
     );
 }

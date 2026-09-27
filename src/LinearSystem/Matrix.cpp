@@ -452,9 +452,7 @@ void Matrix::assembleInternalFace
     const Index ownerIdx = face.ownerCell();
     const Index neighborIdx = face.neighborCell().value();
     const Vector Sf = face.normal() * face.projectedArea();
-    const Vector dPN =
-        mesh_.cells()[neighborIdx].centroid()
-      - mesh_.cells()[ownerIdx].centroid();
+    const Vector dPN = mesh_.dPN(face);
     const Scalar dPNMag = magnitude(dPN);
     const Vector ePN = dPN / (dPNMag + vSmallValue);
 
@@ -508,6 +506,7 @@ void Matrix::assembleInternalFace
         const Scalar deferredCorrection =
             convection.scheme.correction
             (
+                mesh_,
                 face,
                 equation.phi,
                 gradPhiP,

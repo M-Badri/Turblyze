@@ -202,6 +202,30 @@ public:
         return processorPatches_;
     }
 
+// ************************** Geometric Query Methods *************************
+
+    /// Distance vector from owner cell center to face center
+    [[nodiscard]] Vector dPf(const Face& f) const noexcept
+    {
+        return f.centroid() - cells_[f.ownerCell()].centroid();
+    }
+
+    /// Distance vector from neighbor cell center to face center
+    [[nodiscard]] Vector dNf(const Face& f) const
+    {
+        return 
+            f.centroid()
+          - cells_[f.neighborCell().value()].centroid();
+    }
+
+    /// Distance vector from owner cell center to neighbor cell center
+    [[nodiscard]] Vector dPN(const Face& f) const
+    {
+        return 
+            cells_[f.neighborCell().value()].centroid()
+          - cells_[f.ownerCell()].centroid();
+    }
+
 // ****************************** Private Members *****************************
 
 private:

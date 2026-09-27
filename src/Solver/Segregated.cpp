@@ -103,11 +103,11 @@ Segregated::Segregated
     UzAvgf_.setAll(initialVelocity.z());
 
     // Initialize RhieChowFlowRate_ with linear interpolation
-    const Count numFaces = this->mesh().numFaces();
+    const Count numFaces = mesh.numFaces();
 
     for (Index faceIdx = 0; faceIdx < numFaces; ++faceIdx)
     {
-        const Face& face = this->mesh().faces()[faceIdx];
+        const Face& face = mesh.faces()[faceIdx];
         Vector Uf;
 
         if (face.isBoundary())
@@ -132,9 +132,9 @@ Segregated::Segregated
         {
             Uf = Vector
             (
-                interpolateToFace(face, Ux()),
-                interpolateToFace(face, Uy()),
-                interpolateToFace(face, Uz())
+                interpolateToFace(mesh, face, Ux()),
+                interpolateToFace(mesh, face, Uy()),
+                interpolateToFace(mesh, face, Uz())
             );
         }
 
@@ -194,7 +194,7 @@ void Segregated::updateEffectiveViscosity()
         else
         {
             // Internal faces: linear interpolation
-            nuEffFace_[faceIdx] = interpolateToFace(face, nuEff_);
+            nuEffFace_[faceIdx] = interpolateToFace(mesh(), face, nuEff_);
         }
     }
 }
@@ -388,7 +388,7 @@ void Segregated::buildFaceDiagonal()
         else
         {
             // Internal faces
-            DUf_[faceIdx] = interpolateToFace(face, DU_);
+            DUf_[faceIdx] = interpolateToFace(mesh(), face, DU_);
         }
     }
 }
@@ -442,12 +442,12 @@ void Segregated::updateRhieChowFlowRate(const TransientFields* prevStep)
         // Linear-interpolated velocity at face
         const Vector UfLinear
         (
-            interpolateToFace(face, Ux()),
-            interpolateToFace(face, Uy()),
-            interpolateToFace(face, Uz())
+            interpolateToFace(mesh(), face, Ux()),
+            interpolateToFace(mesh(), face, Uy()),
+            interpolateToFace(mesh(), face, Uz())
         );
 
-        const Vector gradPAvgf = interpolateToFace(face, gradP_);
+        const Vector gradPAvgf = interpolateToFace(mesh(), face, gradP_);
         const Vector Sf = face.normal() * face.projectedArea();
         const Vector gradPf =
             gradientScheme().faceGradient
@@ -475,9 +475,9 @@ void Segregated::updateRhieChowFlowRate(const TransientFields* prevStep)
         {
             const Vector UfPrevStepLinear
             (
-                interpolateToFace(face, prevStep->UxPrevStep),
-                interpolateToFace(face, prevStep->UyPrevStep),
-                interpolateToFace(face, prevStep->UzPrevStep)
+                interpolateToFace(mesh(), face, prevStep->UxPrevStep),
+                interpolateToFace(mesh(), face, prevStep->UyPrevStep),
+                interpolateToFace(mesh(), face, prevStep->UzPrevStep)
             );
             const Scalar phiCorr =
                 prevStep->fluxPrevStep[faceIdx] - dot(UfPrevStepLinear, Sf);
@@ -640,9 +640,9 @@ void Segregated::correctVelocity()
         }
         else
         {
-            UxAvgf_[faceIdx] = interpolateToFace(face, Ux());
-            UyAvgf_[faceIdx] = interpolateToFace(face, Uy());
-            UzAvgf_[faceIdx] = interpolateToFace(face, Uz());
+            UxAvgf_[faceIdx] = interpolateToFace(mesh(), face, Ux());
+            UyAvgf_[faceIdx] = interpolateToFace(mesh(), face, Uy());
+            UzAvgf_[faceIdx] = interpolateToFace(mesh(), face, Uz());
         }
     }
 }
@@ -750,7 +750,7 @@ void Segregated::addTransposeGradientSource()
             }
             else
             {
-                gradUf = interpolateToFace(face, gradU());
+                gradUf = interpolateToFace(mesh(), face, gradU());
             }
 
             sumX += nuEfff * dot(gradUf.col(0), Sf);

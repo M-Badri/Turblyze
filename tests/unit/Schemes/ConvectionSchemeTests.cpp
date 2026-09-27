@@ -82,25 +82,25 @@ TEST_CASE("Upwind correction is always zero", "[schemes]")
     // First-order upwind never adds a deferred correction
     REQUIRE_THAT
     (
-        up.correction(face, phi, gradA, gradB, S(3.0)),
+        up.correction(box.mesh(), face, phi, gradA, gradB, S(3.0)),
         WithinAbs(S(0.0), TestTolerances::absTight)
     );
 
     REQUIRE_THAT
     (
-        up.correction(face, phi, gradA, gradB, S(-3.0)),
+        up.correction(box.mesh(), face, phi, gradA, gradB, S(-3.0)),
         WithinAbs(S(0.0), TestTolerances::absTight)
     );
 
     REQUIRE_THAT
     (
-        up.correction(face, phi, gradB, gradA, S(0.0)),
+        up.correction(box.mesh(), face, phi, gradB, gradA, S(0.0)),
         WithinAbs(S(0.0), TestTolerances::absTight)
     );
 
     REQUIRE_THAT
     (
-        up.correction(face, phi, zero, zero, S(100.0)),
+        up.correction(box.mesh(), face, phi, zero, zero, S(100.0)),
         WithinAbs(S(0.0), TestTolerances::absTight)
     );
 }
@@ -121,29 +121,29 @@ TEST_CASE("SecondOrderUpwind uses the upwind gradient", "[schemes]")
     // Positive flux upwinds to the owner: the correction projects the owner
     // gradient onto the owner-to-face vector
     const Scalar flowPos = S(3.0);
-    const Scalar expectedPos = flowPos * dot(gradP, face.dPf());
+    const Scalar expectedPos = flowPos * dot(gradP, box.mesh().dPf(face));
 
     REQUIRE_THAT
     (
-        so.correction(face, phi, gradP, gradN, flowPos),
+        so.correction(box.mesh(), face, phi, gradP, gradN, flowPos),
         WithinRel(expectedPos, TestTolerances::relTight)
     );
 
     // Negative flux upwinds to the neighbor: the correction projects the
     // neighbor gradient onto the neighbor-to-face vector
     const Scalar flowNeg = S(-3.0);
-    const Scalar expectedNeg = flowNeg * dot(gradN, face.dNf().value());
+    const Scalar expectedNeg = flowNeg * dot(gradN, box.mesh().dNf(face));
 
     REQUIRE_THAT
     (
-        so.correction(face, phi, gradP, gradN, flowNeg),
+        so.correction(box.mesh(), face, phi, gradP, gradN, flowNeg),
         WithinRel(expectedNeg, TestTolerances::relTight)
     );
 
     // Zero flux gives zero correction
     REQUIRE_THAT
     (
-        so.correction(face, phi, gradP, gradN, S(0.0)),
+        so.correction(box.mesh(), face, phi, gradP, gradN, S(0.0)),
         WithinAbs(S(0.0), TestTolerances::absTight)
     );
 }
@@ -167,7 +167,7 @@ TEST_CASE("CentralDifference vanishes for constant phi", "[schemes]")
 
     REQUIRE_THAT
     (
-        cd.correction(face, phi, zero, zero, S(3.0)),
+        cd.correction(box.mesh(), face, phi, zero, zero, S(3.0)),
         WithinAbs(S(0.0), TestTolerances::absTight)
     );
 }
@@ -193,10 +193,10 @@ TEST_CASE("LUST blends CDS and SecondOrderUpwind", "[schemes]")
     const LUST lustPureLUD(S(0.0));
 
     const Scalar flowPos = S(4.0);
-    const Scalar corrCD = cd.correction(face, phi, gradP, gradN, flowPos);
-    const Scalar corrSO = so.correction(face, phi, gradP, gradN, flowPos);
+    const Scalar corrCD = cd.correction(box.mesh(), face, phi, gradP, gradN, flowPos);
+    const Scalar corrSO = so.correction(box.mesh(), face, phi, gradP, gradN, flowPos);
     const Scalar corrLUST =
-        lustDefault.correction(face, phi, gradP, gradN, flowPos);
+        lustDefault.correction(box.mesh(), face, phi, gradP, gradN, flowPos);
 
     // Assert exact linear combination: 0.75 * CDS + 0.25 * LUD
     const Scalar expectedLUST = S(0.75) * corrCD + S(0.25) * corrSO;
@@ -209,23 +209,23 @@ TEST_CASE("LUST blends CDS and SecondOrderUpwind", "[schemes]")
     // alpha = 1.0 matches CDS exactly
     REQUIRE_THAT
     (
-        lustPureCDS.correction(face, phi, gradP, gradN, flowPos),
+        lustPureCDS.correction(box.mesh(), face, phi, gradP, gradN, flowPos),
         WithinRel(corrCD, TestTolerances::relTight)
     );
 
     // alpha = 0.0 matches SecondOrderUpwind exactly
     REQUIRE_THAT
     (
-        lustPureLUD.correction(face, phi, gradP, gradN, flowPos),
+        lustPureLUD.correction(box.mesh(), face, phi, gradP, gradN, flowPos),
         WithinRel(corrSO, TestTolerances::relTight)
     );
 
     // Negative flow rate
     const Scalar flowNeg = S(-4.0);
-    const Scalar corrCDNeg = cd.correction(face, phi, gradP, gradN, flowNeg);
-    const Scalar corrSONeg = so.correction(face, phi, gradP, gradN, flowNeg);
+    const Scalar corrCDNeg = cd.correction(box.mesh(), face, phi, gradP, gradN, flowNeg);
+    const Scalar corrSONeg = so.correction(box.mesh(), face, phi, gradP, gradN, flowNeg);
     const Scalar corrLUSTNeg =
-        lustDefault.correction(face, phi, gradP, gradN, flowNeg);
+        lustDefault.correction(box.mesh(), face, phi, gradP, gradN, flowNeg);
 
     const Scalar expectedLUSTNeg = S(0.75) * corrCDNeg + S(0.25) * corrSONeg;
     REQUIRE_THAT

@@ -31,6 +31,10 @@
 #include "StringTypes.h"
 #include "BoundaryType.h"
 
+// *************************** Forward Declarations ***************************
+
+class Mesh;
+
 // ************************* class BoundaryConditions *************************
 
 class BoundaryConditions
@@ -134,7 +138,7 @@ public:
     ) const;
 
     /// Link boundary faces to their owning patches
-    void linkFaces(FaceList& faces);
+    void linkFaces(Mesh& mesh);
 
     /// Validate boundary condition patch names against mesh patch names
     void validatePatchNames() const;

@@ -29,6 +29,10 @@
 #include "Face.h"
 #include "CellData.h"
 
+// *************************** Forward Declarations ***************************
+
+class Mesh;
+
 // ************************** class ConvectionScheme **************************
 
 class ConvectionScheme
@@ -64,7 +68,8 @@ public:
     /// Calculate higher-order deferred correction term
     [[nodiscard]] virtual Scalar correction
     (
-        const Face& face,
+        const Mesh& m,
+        const Face& f,
         const ScalarField& phi,
         const Vector& gradPhiP,
         const Vector& gradPhiN,

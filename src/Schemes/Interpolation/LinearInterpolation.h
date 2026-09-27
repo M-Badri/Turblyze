@@ -19,6 +19,7 @@
 // ********************************** Headers *********************************
 
 #include "Face.h"
+#include "Mesh.h"
 #include "CellData.h"
 
 // ************************** Interpolation Functions *************************
@@ -27,6 +28,7 @@
 template<CellFieldType T>
 [[nodiscard]] T interpolateToFace
 (
+    const Mesh& m,
     const Face& targetFace,
     const CellData<T>& field
 )
@@ -35,9 +37,9 @@ template<CellFieldType T>
     const Index N = targetFace.neighborCell().value();
 
     // Distance weight for the neighbour cell: wN = dP / (dP + dN)
-    const Scalar dP = targetFace.dPfMag();
-    const Scalar dN = targetFace.dNfMag().value();
-    const Scalar wN = dP / (dP + dN);
+    const Scalar dP = magnitude(m.dPf(targetFace));
+    const Scalar dN = magnitude(m.dNf(targetFace));
+    const Scalar wN = dP / (dP + dN + vSmallValue);
 
     return (S(1.0) - wN) * field[P] + wN * field[N];
 }

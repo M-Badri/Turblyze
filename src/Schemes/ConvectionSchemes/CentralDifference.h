@@ -11,11 +11,6 @@
  *
  * @details Central difference adds a deferred correction from the implicit
  * upwind face value to the linearly interpolated face value.
- *
- * @class CentralDifference
- * - Second-order central difference convection discretization
- * - Deferred correction from implicit upwind to linearly interpolated face
- *   values
  *****************************************************************************/
 
 #pragma once
@@ -34,7 +29,8 @@ public:
 
     [[nodiscard]] Scalar correction
     (
-        const Face& face,
+        const Mesh& m,
+        const Face& f,
         const ScalarField& phi,
         const Vector& gradPhiP,
         const Vector& gradPhiN,

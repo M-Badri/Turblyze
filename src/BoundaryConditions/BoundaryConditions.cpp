@@ -14,6 +14,7 @@
 
 // Implementation header
 #include "BoundaryConditions.h"
+#include "Mesh.h"
 
 // Standard library headers
 #include <format>
@@ -163,8 +164,9 @@ const BoundaryType& BoundaryConditions::boundaryType
 }
 
 
-void BoundaryConditions::linkFaces(FaceList& faces)
+void BoundaryConditions::linkFaces(Mesh& mesh)
 {
+    FaceList& faces = mesh.faces();
     for (const auto& patch : patches_)
     {
         if (patch.firstFaceIdx() > patch.lastFaceIdx())
@@ -260,15 +262,17 @@ void BoundaryConditions::linkFaces(FaceList& faces)
 
             // Over-relaxed orthogonal metric, per unit diffusivity and area
             const Vector Sf = face.normal() * face.projectedArea();
-            const Vector ePf = normalized(face.dPf());
+            const Vector dPf = mesh.dPf(face);
+            const Scalar dPfMag = magnitude(dPf);
+            const Vector ePf = dPf / (dPfMag + vSmallValue);
             const Vector Ef = (dot(Sf, Sf) / dot(Sf, ePf)) * ePf;
 
             geomOwnerCells_[compactIdx] = face.ownerCell();
             normals_[compactIdx] = face.normal();
             diffMetric_[compactIdx] =
                 magnitude(Ef)
-              / (face.projectedArea() * (face.dPfMag() + vSmallValue));
-            normalDistance_[compactIdx] = dot(face.dPf(), face.normal());
+              / (face.projectedArea() * (dPfMag + vSmallValue));
+            normalDistance_[compactIdx] = dot(dPf, face.normal());
         }
     }
 

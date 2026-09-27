@@ -416,11 +416,6 @@ Mesh makeHexBoxMesh
         mesh.cells()[cellIdx].geometricProperties(faceIntegrals);
     }
 
-    for (Index faceIdx = 0; faceIdx < mesh.numFaces(); ++faceIdx)
-    {
-        mesh.faces()[faceIdx].distances(mesh.cells());
-    }
-
     return mesh;
 }
 
@@ -547,7 +542,6 @@ Mesh makeDecomposedChainMesh()
         Face& face = mesh.faces()[faceIdx];
 
         static_cast<void>(face.geometricProperties(mesh.nodes()));
-        face.distances(mesh.cells());
     }
 
     return mesh;

@@ -42,13 +42,7 @@ public:
     /// Default constructor
     Cell() noexcept = default;
 
-    /**
-     * @brief Constructs cell with connectivity data
-     * @param cellIdx Unique cell identifier
-     * @param faces Indices of bounding faces
-     * @param neighbors Indices of neighboring cells
-     * @param signs Face normal direction signs
-     */
+    /// Constructor with connectivity data
     Cell
     (
         Index cellIdx,
@@ -69,19 +63,6 @@ public:
     void setIdx(Index cellIdx) noexcept
     {
         idx_ = cellIdx;
-    }
-
-    /// Add a bounding face with its normal direction sign
-    void addFace(Index faceIdx, int8_t sign)
-    {
-        faceIndices_.push_back(faceIdx);
-        faceSigns_.push_back(sign);
-    }
-
-    /// Set all neighbor cell indices
-    void setNeighborCellIndices(const IndexList& neighbors)
-    {
-        neighborCellIndices_.assign(neighbors.begin(), neighbors.end());
     }
 
     /// Set geometry directly: ghost stubs take the owning rank's values

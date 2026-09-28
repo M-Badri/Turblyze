@@ -86,42 +86,6 @@ public:
 
 // ****************************** Setter Methods ******************************
 
-    /// Set face identifier
-    void setIdx(Index faceIdx) noexcept
-    {
-        idx_ = faceIdx;
-    }
-
-    /// Set owner cell index
-    void setOwnerCell(Index owner) noexcept
-    {
-        ownerCell_ = owner;
-    }
-
-    /// Set neighbor cell index
-    void setNeighborCell(Index neighbor) noexcept
-    {
-        neighborCell_ = neighbor;
-    }
-
-    /// Set neighbor cell to null
-    void setNeighborCell(std::nullopt_t) noexcept
-    {
-        neighborCell_ = std::nullopt;
-    }
-
-    /// Add node index to face connectivity
-    void addNodeIndex(Index nodeIdx)
-    {
-        nodeIndices_.push_back(nodeIdx);
-    }
-
-    /// Clear all node indices
-    void clearNodeIndices() noexcept
-    {
-        nodeIndices_.clear();
-    }
-
     /// Set the boundary patch this face belongs to
     void setPatch(const BoundaryPatch& p) noexcept
     {

@@ -761,10 +761,6 @@ void MeshReader::parseFacesSection
 
             const Index internalFaceIdx = faceIdx - 1;
 
-            Face& currentFace = faces_[internalFaceIdx];
-            currentFace.setIdx(internalFaceIdx);
-            currentFace.clearNodeIndices();
-
             if (!std::getline(ifs, line))
             {
                 FatalError
@@ -810,9 +806,15 @@ void MeshReader::parseFacesSection
             const Token& ownerHex = hexItems[hexItems.size() - 2];
             const Token& neighborHex = hexItems[hexItems.size() - 1];
 
+            IndexList nodeIndices;
+            if (nodeEnd > nodeStart)
+            {
+                nodeIndices.reserve(nodeEnd - nodeStart);
+            }
+
             for (Index j = nodeStart; j < nodeEnd; ++j)
             {
-                currentFace.addNodeIndex
+                nodeIndices.push_back
                 (
                     safeFluentIndexConvert
                     (
@@ -822,29 +824,36 @@ void MeshReader::parseFacesSection
                 );
             }
 
-            currentFace.setOwnerCell
+            const Index ownerCell = safeFluentIndexConvert
             (
-                safeFluentIndexConvert
-                (
-                    hexToDec(ownerHex),
-                    "owner cell index"
-                )
+                hexToDec(ownerHex),
+                "owner cell index"
             );
 
             if (neighborHex != "0")
             {
-                currentFace.setNeighborCell
+                const Index neighborCell = safeFluentIndexConvert
                 (
-                    safeFluentIndexConvert
-                    (
-                        hexToDec(neighborHex),
-                        "neighbor cell index"
-                    )
+                    hexToDec(neighborHex),
+                    "neighbor cell index"
+                );
+
+                faces_[internalFaceIdx] = Face
+                (
+                    internalFaceIdx,
+                    std::move(nodeIndices),
+                    ownerCell,
+                    neighborCell
                 );
             }
             else
             {
-                currentFace.setNeighborCell(std::nullopt);
+                faces_[internalFaceIdx] = Face
+                (
+                    internalFaceIdx,
+                    std::move(nodeIndices),
+                    ownerCell
+                );
             }
         }
     }
@@ -937,18 +946,17 @@ void MeshReader::parseFacesSectionBinary
 
         const Index internalFaceIdx = faceIdx - 1;
 
-        Face& currentFace = faces_[internalFaceIdx];
-        currentFace.setIdx(internalFaceIdx);
-        currentFace.clearNodeIndices();
-
         // Node count, node indices, then owner and neighbor cells
         const Count nodeCount = hasNodeCountPrefix
             ? static_cast<Count>(readInt32(ifs))
             : fixedNodeCount;
 
+        IndexList nodeIndices;
+        nodeIndices.reserve(nodeCount);
+
         for (Count j = 0; j < nodeCount; ++j)
         {
-            currentFace.addNodeIndex
+            nodeIndices.push_back
             (
                 safeFluentIndexConvert
                 (
@@ -961,29 +969,36 @@ void MeshReader::parseFacesSectionBinary
         const std::int32_t owner = readInt32(ifs);
         const std::int32_t neighbor = readInt32(ifs);
 
-        currentFace.setOwnerCell
+        const Index ownerCell = safeFluentIndexConvert
         (
-            safeFluentIndexConvert
-            (
-                static_cast<Count>(owner),
-                "owner cell index"
-            )
+            static_cast<Count>(owner),
+            "owner cell index"
         );
 
         if (neighbor != 0)
         {
-            currentFace.setNeighborCell
+            const Index neighborCell = safeFluentIndexConvert
             (
-                safeFluentIndexConvert
-                (
-                    static_cast<Count>(neighbor),
-                    "neighbor cell index"
-                )
+                static_cast<Count>(neighbor),
+                "neighbor cell index"
+            );
+
+            faces_[internalFaceIdx] = Face
+            (
+                internalFaceIdx,
+                std::move(nodeIndices),
+                ownerCell,
+                neighborCell
             );
         }
         else
         {
-            currentFace.setNeighborCell(std::nullopt);
+            faces_[internalFaceIdx] = Face
+            (
+                internalFaceIdx,
+                std::move(nodeIndices),
+                ownerCell
+            );
         }
     }
 
@@ -1047,50 +1062,51 @@ void MeshReader::parseBoundariesSection
 
 void MeshReader::buildTopology()
 {
-    for (Index cellIdx = 0; cellIdx < cells_.size(); ++cellIdx)
-    {
-        cells_[cellIdx].setIdx(cellIdx);
-    }
+    const Count numCells = cells_.size();
 
-    std::vector<IndexList> tempCellNeighbors(cells_.size());
+    std::vector<IndexList> cellFaces(numCells);
+    std::vector<Cell::FaceSignList> cellSigns(numCells);
+    std::vector<IndexList> cellNeighbors(numCells);
 
     for (Index faceIdx = 0; faceIdx < faces_.size(); ++faceIdx)
     {
         const Face& currentFace = faces_[faceIdx];
 
         // Map face to owner cell and assign sign +1
-        if (currentFace.ownerCell() < cells_.size())
+        if (currentFace.ownerCell() < numCells)
         {
-            cells_[currentFace.ownerCell()].addFace(faceIdx, 1);
+            cellFaces[currentFace.ownerCell()].push_back(faceIdx);
+            cellSigns[currentFace.ownerCell()].push_back(static_cast<std::int8_t>(1));
 
             // If this face has a valid neighborCell
             if
             (
                 currentFace.neighborCell().has_value()
-             && currentFace.neighborCell().value() < cells_.size()
+             && currentFace.neighborCell().value() < numCells
             )
             {
-                tempCellNeighbors[currentFace.ownerCell()].push_back
+                cellNeighbors[currentFace.ownerCell()].push_back
                 (
                     currentFace.neighborCell().value()
                 );
             }
         }
 
-        // map face to neighbor cell and assign sign -1 if neighborCell is valid
+        // Map face to neighbor cell and assign sign -1 if neighborCell is valid
         if
         (
             currentFace.neighborCell().has_value()
-         && currentFace.neighborCell().value() < cells_.size()
+         && currentFace.neighborCell().value() < numCells
         )
         {
             const Index neighborIdx = currentFace.neighborCell().value();
-            
-            cells_[neighborIdx].addFace(faceIdx, -1);
 
-            if (currentFace.ownerCell() < cells_.size())
+            cellFaces[neighborIdx].push_back(faceIdx);
+            cellSigns[neighborIdx].push_back(static_cast<std::int8_t>(-1));
+
+            if (currentFace.ownerCell() < numCells)
             {
-                tempCellNeighbors[neighborIdx].push_back
+                cellNeighbors[neighborIdx].push_back
                 (
                     currentFace.ownerCell()
                 );
@@ -1098,10 +1114,16 @@ void MeshReader::buildTopology()
         }
     }
 
-    // After processing all faces, set the neighbor cell indices for each cell
-    for (Index cellIdx = 0; cellIdx < cells_.size(); ++cellIdx)
+    // Construct cells with their connectivity
+    for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
-        cells_[cellIdx].setNeighborCellIndices(tempCellNeighbors[cellIdx]);
+        cells_[cellIdx] = Cell
+        (
+            cellIdx,
+            std::move(cellFaces[cellIdx]),
+            std::move(cellNeighbors[cellIdx]),
+            std::move(cellSigns[cellIdx])
+        );
     }
 }
 

@@ -9,22 +9,19 @@
  * @file BoundaryPatch.h
  * @brief Boundary patch representation and mesh connectivity management
  *
- * @details This header defines the BoundaryPatch class, which represents a
- * set of faces on the domain boundary. A patch is identified by a name
- * (e.g., "inlet", "wall") and a geometric zone ID from the mesh file.
- *
- * @class BoundaryPatch
- * - Identification of boundary zones (name, ID, type)
- * - Topological range definitions (start face index, end face index)
- * - Helper methods for querying patch size and face validity
+ * @details The BoundaryPatch class represents a set of faces on the domain
+ * boundary. A patch is identified by a name (e.g., "inlet", "wall") and a
+ * geometric zone ID from the mesh file.
  *****************************************************************************/
 
 #pragma once
 
 // ********************************** Headers *********************************
 
+// Standard library headers
 #include <utility>
 
+// Project headers
 #include "Integer.h"
 #include "StringTypes.h"
 

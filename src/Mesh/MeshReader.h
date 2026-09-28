@@ -9,16 +9,9 @@
  * @file MeshReader.h
  * @brief Fluent mesh file reader for ANSYS mesh files
  *
- * @details This header defines the MeshReader class which reads mesh data
- * from Fluent (.msh) files and converts them into the internal structure
- * (Nodes, Faces, Cells). Currently supports 3D unstructured meshes exported
- * from ANSYS Meshing.
- *
- * @class MeshReader
- * - Parsing file sections (Nodes, Cells, Faces, Boundaries)
- * - Constructing the topology and connectivity
- * - Establishing owner-neighbor relationships for all faces
- * - Identifying and grouping boundary patches
+ * @details MeshReader reads mesh data from Fluent (.msh) files and converts
+ * them into the internal structure (Nodes, Faces, Cells). Currently supports
+ * 3D unstructured meshes exported from ANSYS Meshing.
  *
  * @note Supported Fluent face types (hexadecimal):
  * - "2" = internal, "3" = wall, "4" = pressure-inlet

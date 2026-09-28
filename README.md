@@ -3,21 +3,25 @@ SPDX-FileCopyrightText: 2025-2026 Mohamed Mousa
 SPDX-License-Identifier: Apache-2.0
 -->
 
-<p align="center">
-  <img src="docs/logo.png" alt="Turblyze logo" width="400">
-</p>
-
 <h1 align="center">Turblyze</h1>
-
-<p align="center">3D Incompressible CFD Solver</p>
-
 <p align="center">
   <a href="https://github.com/mohamed-i-mousa/Turblyze/actions/workflows/ci.yml"><img src="https://github.com/mohamed-i-mousa/Turblyze/actions/workflows/ci.yml/badge.svg" alt="CI Build & Test"></a>
   <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows%20(WSL2)-lightgrey.svg" alt="Platforms">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0"></a>
 </p>
 
-This is a 3D incompressible CFD solver parallelized with MPI that solves steady-state and transient flows and offers few turbulence modeling options. It can read unstructured Fluent `.msh` meshes and export results in VTKHDF format (`.vtkhdf`) for visualization in ParaView.
+<p align="center">3D Incompressible CFD Solver parallelized with MPI and solves steady-state and transient flows. It offers several turbulence modeling options, reads unstructured Fluent `.msh` meshes, and export results in VTKHDF format (`.vtkhdf`) for visualization in ParaView. </p>
+
+
+
+<p align="center">
+  <a href="validation/cylinder/animation/cylinderVortexShedding.mp4">
+    <img src="docs/cylinderVortexShedding.gif" alt="Turblyze: 2D Cylinder Vortex Shedding (Re ≈ 150)" width="100%">
+  </a>
+</p>
+<p align="center">
+  <em>Von Kármán vortex street past a circular cylinder (<a href="validation/cylinder/README.md">Re ≈ 150</a>) simulated with Turblyze</em>
+</p>
 
 ## Features
 

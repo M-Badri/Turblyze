@@ -15,6 +15,9 @@
 // Implementation header
 #include "Comm.h"
 
+// Standard library headers
+#include <cstdlib>
+
 // External library headers
 #include <mpi.h>
 
@@ -59,4 +62,20 @@ Index Comm::myProcessorNum()
 bool Comm::master()
 {
     return rank == 0;
+}
+
+
+void Comm::abort(int exitCode) noexcept
+{
+    int initialized = 0;
+    int finalized = 0;
+    MPI_Initialized(&initialized);
+    MPI_Finalized(&finalized);
+
+    if (initialized != 0 && finalized == 0)
+    {
+        MPI_Abort(MPI_COMM_WORLD, exitCode);
+    }
+
+    std::abort();
 }

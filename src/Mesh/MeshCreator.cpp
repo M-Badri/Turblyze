@@ -23,26 +23,33 @@
 #include <vector>
 
 // Project headers
-#include "Comm.h"
-#include "DecompositionChecker.h"
 #include "Logger.h"
+#include "Comm.h"
+#include "ErrorHandler.h"
 #include "MeshChecker.h"
 #include "MeshDecomposer.h"
 #include "MeshDistributor.h"
 #include "MeshReader.h"
+#include "Reduce.h"
 #include "SubmeshData.h"
+#include "HaloExchange.h"
 
 // ****************************** Internal Helpers ****************************
 
 namespace
 {
 
-/// Compute face and owned-cell geometry; ghost stubs already carry theirs
-void prepareGeometry(Mesh& mesh, bool debug)
+/// Compute face and domain-cell geometry; ghost stubs already carry theirs
+void prepareGeometry
+(
+    FaceList& faces,
+    CellList& cells,
+    const NodeList& nodes,
+    Count numDomainCells,
+    bool debug
+)
 {
-    std::vector<FaceIntegrals> faceIntegrals(mesh.numFaces());
-    auto& faces = mesh.faces();
-    const auto& nodes = mesh.nodes();
+    std::vector<FaceIntegrals> faceIntegrals(faces.size());
 
     for (Index faceIdx = 0; faceIdx < faces.size(); ++faceIdx)
     {
@@ -55,10 +62,7 @@ void prepareGeometry(Mesh& mesh, bool debug)
             << "Geometric properties calculated for faces." << '\n';
     }
 
-    auto& cells = mesh.cells();
-    const Count numOwnedCells = mesh.numOwnedCells();
-
-    for (Index cellIdx = 0; cellIdx < numOwnedCells; ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < numDomainCells; ++cellIdx)
     {
         cells[cellIdx].geometricProperties(faceIntegrals);
     }
@@ -71,25 +75,33 @@ void prepareGeometry(Mesh& mesh, bool debug)
 
 
 /// Read the complete mesh from file, prepare it, optionally check it
-Mesh readCompleteMesh(const CaseConfiguration& config)
+Mesh parseMesh(const CaseConfiguration& config)
 {
+    Halo::reset();
+
     MeshReader meshReader(config.meshFile);
 
-    Mesh mesh
-    (
-        meshReader.moveNodes(),
-        meshReader.moveFaces(),
-        meshReader.moveCells(),
-        meshReader.moveBoundaryPatches()
-    );
+    auto nodes = meshReader.moveNodes();
+    auto faces = meshReader.moveFaces();
+    auto cells = meshReader.moveCells();
+    auto patches = meshReader.moveBoundaryPatches();
 
     std::cout << std::format
     (
         "Mesh Loaded: {} nodes, {} faces, {} cells.\n",
-        mesh.numNodes(), mesh.numFaces(), mesh.numCells()
+        nodes.size(), faces.size(), cells.size()
     );
 
-    prepareGeometry(mesh, config.debug);
+    MeshCreator::linkBoundaryFaces(faces, patches);
+    prepareGeometry(faces, cells, nodes, cells.size(), config.debug);
+
+    Mesh mesh
+    (
+        std::move(nodes),
+        std::move(faces),
+        std::move(cells),
+        std::move(patches)
+    );
 
     if (config.checkQuality)
     {
@@ -98,6 +110,7 @@ Mesh readCompleteMesh(const CaseConfiguration& config)
 
     return mesh;
 }
+
 
 /// Rebuild one rank's Mesh from its flat submesh block
 [[nodiscard]] Mesh buildSubmesh(SubmeshData block, bool debug)
@@ -119,108 +132,111 @@ Mesh readCompleteMesh(const CaseConfiguration& config)
         );
     }
 
-    // Faces, with original node order and owner/neighbor roles
+    // Faces: node lists from CSR, owner/neighbor from flat arrays
     FaceList faces;
     faces.reserve(numFaces);
 
-    for (Index faceIdx = 0; faceIdx < numFaces; ++faceIdx)
+    for (Index f = 0; f < numFaces; ++f)
     {
-        IndexList faceNodes
+        IndexList faceNodeIndices
         (
-            block.faceNodes.data() + block.faceNodeOffsets[faceIdx],
-            block.faceNodes.data() + block.faceNodeOffsets[faceIdx + 1]
+            block.faceNodes.data() + block.faceNodeOffsets[f],
+            block.faceNodes.data() + block.faceNodeOffsets[f + 1]
         );
 
-        if (block.faceNeighbor[faceIdx] == SubmeshData::noNeighbor)
+        if (block.faceNeighbor[f] != SubmeshData::noNeighbor)
         {
             faces.emplace_back
             (
-                faceIdx,
-                std::move(faceNodes),
-                block.faceOwner[faceIdx]
+                f,
+                std::move(faceNodeIndices),
+                block.faceOwner[f],
+                block.faceNeighbor[f]
             );
         }
         else
         {
             faces.emplace_back
             (
-                faceIdx,
-                std::move(faceNodes),
-                block.faceOwner[faceIdx],
-                block.faceNeighbor[faceIdx]
+                f,
+                std::move(faceNodeIndices),
+                block.faceOwner[f]
             );
         }
     }
 
-    // Neighbor lists rebuilt from local faces, ghosts included
-    std::vector<IndexList> cellNeighbors(block.numOwnedCells);
-
-    for (Index faceIdx = 0; faceIdx < numFaces; ++faceIdx)
-    {
-        const Index neighbor = block.faceNeighbor[faceIdx];
-
-        if (neighbor == SubmeshData::noNeighbor)
-        {
-            continue;
-        }
-
-        const Index owner = block.faceOwner[faceIdx];
-
-        if (owner < block.numOwnedCells)
-        {
-            cellNeighbors[owner].push_back(neighbor);
-        }
-        if (neighbor < block.numOwnedCells)
-        {
-            cellNeighbors[neighbor].push_back(owner);
-        }
-    }
-
+    // Cells: owned cells first (with face lists and signs from CSR)
     CellList cells;
     cells.reserve(block.numOwnedCells + numGhosts);
 
-    for (Index cellIdx = 0; cellIdx < block.numOwnedCells; ++cellIdx)
+    for (Index c = 0; c < block.numOwnedCells; ++c)
     {
-        IndexList cellFaces
+        IndexList cellFaceIndices
         (
-            block.cellFaces.data() + block.cellFaceOffsets[cellIdx],
-            block.cellFaces.data() + block.cellFaceOffsets[cellIdx + 1]
-        );
-        Cell::FaceSignList signs
-        (
-            block.cellFaceSigns.data() + block.cellFaceOffsets[cellIdx],
-            block.cellFaceSigns.data() + block.cellFaceOffsets[cellIdx + 1]
+            block.cellFaces.data() + block.cellFaceOffsets[c],
+            block.cellFaces.data() + block.cellFaceOffsets[c + 1]
         );
 
-        cells.emplace_back
+        // Precompute neighbor-cell indices from face ownership
+        IndexList cellNeighborIndices;
+        cellNeighborIndices.reserve(cellFaceIndices.size());
+
+        for (const Index faceIdx : cellFaceIndices)
+        {
+            const Face& face = faces[faceIdx];
+
+            if (face.ownerCell() == c)
+            {
+                if (face.neighborCell().has_value())
+                {
+                    cellNeighborIndices.push_back(face.neighborCell().value());
+                }
+            }
+            else
+            {
+                cellNeighborIndices.push_back(face.ownerCell());
+            }
+        }
+
+        std::vector<int8_t> signs
         (
-            cellIdx,
-            std::move(cellFaces),
-            std::move(cellNeighbors[cellIdx]),
+            block.cellFaceSigns.data() + block.cellFaceOffsets[c],
+            block.cellFaceSigns.data() + block.cellFaceOffsets[c + 1]
+        );
+
+        Cell cell
+        (
+            c,
+            std::move(cellFaceIndices),
+            std::move(cellNeighborIndices),
             std::move(signs)
         );
+
+        cells.push_back(std::move(cell));
     }
 
-    // Ghost stubs: geometry from the complete mesh, no local topology
-    for (Index i = 0; i < numGhosts; ++i)
+    // Ghost cells: append stubs carrying their complete-mesh geometry
+    for (Index g = 0; g < numGhosts; ++g)
     {
         Cell ghost;
-        ghost.setIdx(block.numOwnedCells + i);
+        ghost.setIdx(block.numOwnedCells + g);
         ghost.setGeometry
         (
             Vector
             (
-                block.ghostCentroids[3 * i],
-                block.ghostCentroids[3 * i + 1],
-                block.ghostCentroids[3 * i + 2]
+                block.ghostCentroids[3 * g],
+                block.ghostCentroids[3 * g + 1],
+                block.ghostCentroids[3 * g + 2]
             ),
-            block.ghostVolumes[i]
+            block.ghostVolumes[g]
         );
+
         cells.push_back(std::move(ghost));
     }
 
-    // One patch per cut, so the cuts look like ordinary named patches
+    // Physical patches
     PatchList patches;
+    patches.reserve(block.patchNames.size() + block.procNeighborRanks.size());
 
     for (Index p = 0; p < block.patchNames.size(); ++p)
     {
@@ -235,7 +251,9 @@ Mesh readCompleteMesh(const CaseConfiguration& config)
         patches.push_back(std::move(patch));
     }
 
+    // Processor patches: boundary patches and cut metadata
     ProcessorPatchList processorPatches;
+    processorPatches.reserve(block.procNeighborRanks.size());
 
     for (Index p = 0; p < block.procNeighborRanks.size(); ++p)
     {
@@ -272,18 +290,23 @@ Mesh readCompleteMesh(const CaseConfiguration& config)
         );
     }
 
+    MeshCreator::linkBoundaryFaces(faces, patches);
+    prepareGeometry(faces, cells, nodes, block.numOwnedCells, debug);
+
     Mesh mesh
     (
         std::move(nodes),
         std::move(faces),
         std::move(cells),
         std::move(patches),
-        block.numOwnedCells,
-        std::move(block.ghostGlobalIds),
-        std::move(processorPatches)
+        numGhosts
     );
 
-    prepareGeometry(mesh, debug);
+    Halo::init
+    (
+        std::move(processorPatches),
+        std::move(block.ghostGlobalIds)
+    );
 
     return mesh;
 }
@@ -294,6 +317,23 @@ Mesh readCompleteMesh(const CaseConfiguration& config)
 
 namespace MeshCreator
 {
+
+void linkBoundaryFaces(FaceList& faces, const PatchList& patches)
+{
+    for (const auto& patch : patches)
+    {
+        for
+        (
+            Index faceIdx = patch.firstFaceIdx();
+            faceIdx <= patch.lastFaceIdx();
+            ++faceIdx
+        )
+        {
+            faces[faceIdx].setPatch(patch);
+        }
+    }
+}
+
 
 Mesh decomposeAndDistribute(Mesh completeMesh, bool debug)
 {
@@ -311,9 +351,8 @@ Mesh decomposeAndDistribute(Mesh completeMesh, bool debug)
             blocks = decomposer.decompose();
         }
 
-        // The complete mesh is gone; the local submesh takes its place
+        // The complete mesh is released; the local submesh takes its place
         completeMesh = Mesh();
-        Mesh::resetCounts();
     }
 
     SubmeshData block = MeshDistributor::distribute(std::move(blocks));
@@ -322,7 +361,10 @@ Mesh decomposeAndDistribute(Mesh completeMesh, bool debug)
 
     Mesh mesh = buildSubmesh(std::move(block), debug);
 
-    DecompositionChecker::check(mesh, totalCellCount);
+    if (globalSum(mesh.numDomainCells()) != totalCellCount)
+    {
+        FatalError("Cell count mismatch after decomposition");
+    }
 
     return mesh;
 }
@@ -335,11 +377,11 @@ Mesh create(const CaseConfiguration& config)
 
     if (!Comm::parallelRun())
     {
-        return readCompleteMesh(config);
+        return parseMesh(config);
     }
 
     // The master rank reads and partitions, then ships the submeshes
-    Mesh completeMesh = Comm::master() ? readCompleteMesh(config) : Mesh();
+    Mesh completeMesh = Comm::master() ? parseMesh(config) : Mesh();
 
     if (Comm::master())
     {

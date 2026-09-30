@@ -188,7 +188,7 @@ void load
 (
     const CaseReader& reader,
     const CaseConfiguration& config,
-    Mesh& mesh,
+    const Mesh& mesh,
     BoundaryConditions& bcManager
 )
 {

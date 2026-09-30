@@ -138,7 +138,7 @@ public:
     ) const;
 
     /// Link boundary faces to their owning patches
-    void linkFaces(Mesh& mesh);
+    void linkFaces(const Mesh& mesh);
 
     /// Validate boundary condition patch names against mesh patch names
     void validatePatchNames() const;
@@ -192,7 +192,7 @@ private:
     std::vector<char> correctsFlux_;
     std::vector<char> velocityHullExcluded_;
 
-    /// All boundary patches
+    /// Mesh boundary patches (non-owning view)
     PatchList patches_;
 
     /// True after linkFaces() to prevent addPatch() after linking

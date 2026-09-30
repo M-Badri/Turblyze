@@ -28,6 +28,7 @@
 #include "ProcessorPatch.h"
 #include "MeshCreator.h"
 #include "Comm.h"
+#include "HaloExchange.h"
 
 // ***************************** Internal Helpers *****************************
 
@@ -398,25 +399,29 @@ Mesh makeHexBoxMesh
         );
     }
 
-    // Construct the mesh (this sets the process-wide cell/face counts)
-    Mesh mesh(std::move(nodes), std::move(faces), std::move(cells),
-              std::move(patches));
+    MeshCreator::linkBoundaryFaces(faces, patches);
 
     // Geometry pass, mirroring MeshCreator::prepareGeometry
-    std::vector<FaceIntegrals> faceIntegrals(mesh.numFaces());
+    std::vector<FaceIntegrals> faceIntegrals(faces.size());
 
-    for (Index faceIdx = 0; faceIdx < mesh.numFaces(); ++faceIdx)
+    for (Index faceIdx = 0; faceIdx < faces.size(); ++faceIdx)
     {
         faceIntegrals[faceIdx] =
-            mesh.faces()[faceIdx].geometricProperties(mesh.nodes());
+            faces[faceIdx].geometricProperties(nodes);
     }
 
-    for (Index cellIdx = 0; cellIdx < mesh.numOwnedCells(); ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < cells.size(); ++cellIdx)
     {
-        mesh.cells()[cellIdx].geometricProperties(faceIntegrals);
+        cells[cellIdx].geometricProperties(faceIntegrals);
     }
 
-    return mesh;
+    return Mesh
+    (
+        std::move(nodes),
+        std::move(faces),
+        std::move(cells),
+        std::move(patches)
+    );
 }
 
 
@@ -525,24 +530,30 @@ Mesh makeDecomposedChainMesh()
         );
     }
 
+    MeshCreator::linkBoundaryFaces(faces, patches);
+
+    // Face geometry only; the cells carry the centroids set above
+    for (Index faceIdx = 0; faceIdx < faces.size(); ++faceIdx)
+    {
+        Face& face = faces[faceIdx];
+
+        static_cast<void>(face.geometricProperties(nodes));
+    }
+
     Mesh mesh
     (
         std::move(nodes),
         std::move(faces),
         std::move(cells),
         std::move(patches),
-        numOwned,
-        neighbors,                  // ghost global indices == neighbour ranks
-        std::move(processorPatches)
+        numGhost
     );
 
-    // Face geometry only; the cells carry the centroids set above
-    for (Index faceIdx = 0; faceIdx < mesh.numFaces(); ++faceIdx)
-    {
-        Face& face = mesh.faces()[faceIdx];
-
-        static_cast<void>(face.geometricProperties(mesh.nodes()));
-    }
+    Halo::init
+    (
+        std::move(processorPatches),
+        neighbors
+    );
 
     return mesh;
 }
@@ -552,6 +563,7 @@ Mesh makeDecomposedHexBoxMesh(Count nx, Count ny, Count nz, Scalar spacing)
 {
     if (!Comm::parallelRun())
     {
+        Halo::reset();
         return makeHexBoxMesh(nx, ny, nz, spacing);
     }
 

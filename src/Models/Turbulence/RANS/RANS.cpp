@@ -84,7 +84,7 @@ void RANS::beginTimeStep()
 void RANS::updatePrevStepDerivatives()
 {
     const ScalarField& dissipationNew = dissipation();
-    const Count numCells = mesh_.numOwnedCells();
+    const Count numCells = mesh_.numDomainCells();
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -144,7 +144,7 @@ FaceData<Scalar> RANS::wallShearStress
     const ScalarField& Uz
 ) const
 {
-    FaceData<Scalar> shearStress(S(0.0));
+    FaceData<Scalar> shearStress(mesh_, S(0.0));
 
     for (Index i = 0; i < wallFunctionFaceIndices_.size(); ++i)
     {
@@ -278,8 +278,8 @@ void RANS::updateWallDistance()
     for (Index iter = 0; iter < maxIterations; ++iter)
     {
         // The wave crosses the cuts one exchange per sweep
-        exchangeHalos(mesh_, {&wallDistance_});
-        exchangeHalos(mesh_, {&nearestWallPoint_});
+        Halo::exchange({&wallDistance_});
+        Halo::exchange({&nearestWallPoint_});
 
         Scalar maxChange = S(0.0);
 
@@ -354,7 +354,7 @@ void RANS::initializeWallFunctionGeometry
     Field wallFunctionField
 )
 {
-    const Count numCells = mesh_.numOwnedCells();
+    const Count numCells = mesh_.numDomainCells();
 
     wallFunctionFaceIndices_.clear();
     wallCellIndices_.clear();
@@ -472,9 +472,9 @@ void RANS::updateYPlus()
 
 ScalarField RANS::strainRateSquared(const TensorField& gradU) const
 {
-    const Count numCells = mesh_.numOwnedCells();
+    const Count numCells = mesh_.numDomainCells();
 
-    ScalarField strainRateSq;
+    ScalarField strainRateSq{mesh_};
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -492,9 +492,9 @@ ScalarField RANS::velocityDivergence
     const FaceFluxField& flowRateFace
 ) const
 {
-    const Count numCells = mesh_.numOwnedCells();
+    const Count numCells = mesh_.numDomainCells();
 
-    ScalarField divU;
+    ScalarField divU{mesh_};
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -533,7 +533,7 @@ Scalar RANS::normalisedFieldResidual
     const ScalarField& previousField
 ) const
 {
-    const Count numCells = mesh_.numOwnedCells();
+    const Count numCells = mesh_.numDomainCells();
 
     // Normalised change: ||x - x_prev|| / ||x_prev||
     Scalar diffSq = S(0.0);

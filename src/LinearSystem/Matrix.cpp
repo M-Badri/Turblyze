@@ -7,7 +7,7 @@
 
  ------------------------------------------------------------------------------
  * @file Matrix.cpp
- * @brief Matrix assembly and linear system construction for equations
+ * @brief PETSc COO matrix assembly for finite volume transport equations
  *****************************************************************************/
 
 // ********************************** Headers *********************************
@@ -17,12 +17,16 @@
 
 // Standard library headers
 #include <algorithm>
+#include <cmath>
+#include <vector>
 
 // Project headers
+#include "Comm.h"
 #include "ErrorHandler.h"
 #include "GlobalIndex.h"
 #include "PETScRuntime.h"
 #include "TimeScheme.h"
+#include "HaloExchange.h"
 
 // ************************* Special Member Functions *************************
 
@@ -35,7 +39,7 @@ Matrix::Matrix
     mesh_{mesh},
     bcManager_{boundaryConds}
 {
-    const Count numOwnedCells = mesh_.numOwnedCells();
+    const Count numDomainCells = mesh_.numDomainCells();
     const Count numFaces = mesh_.numFaces();
 
     // Slot-ordered face lists; a ghost cell on either side means a cut
@@ -52,8 +56,8 @@ Matrix::Matrix
         }
         else if
         (
-            face.ownerCell() >= numOwnedCells
-         || face.neighborCell().value() >= numOwnedCells
+            face.ownerCell() >= numDomainCells
+         || face.neighborCell().value() >= numDomainCells
         )
         {
             processorFaces_.push_back(faceIdx);
@@ -75,12 +79,12 @@ Matrix::Matrix
     }
 
     diagOffset_ = 2 * numInternalFaces + numProcessorFaces;
-    const Count numCoo = diagOffset_ + numOwnedCells;
+    const Count numCoo = diagOffset_ + numDomainCells;
     scribbleSlot_ = numCoo;
 
     // The fixed sparsity pattern, in GLOBAL rank-major indices
-    const GlobalIndex globalCells(numOwnedCells);
-    const IndexList& ghostGlobals = mesh_.ghostGlobalIndices();
+    const GlobalIndex globalCells(numDomainCells);
+    const IndexList& ghostGlobals = Halo::ghostGlobalIndices();
 
     std::vector<PetscInt> cooRows(numCoo);
     std::vector<PetscInt> cooCols(numCoo);
@@ -108,19 +112,19 @@ Matrix::Matrix
         const Face& face = mesh_.faces()[processorFaces_[m]];
         const Index owner = face.ownerCell();
         const Index neighbor = face.neighborCell().value();
-        const Index ownedSide = owner < numOwnedCells ? owner : neighbor;
-        const Index ghostSide = owner < numOwnedCells ? neighbor : owner;
+        const Index ownedSide = owner < numDomainCells ? owner : neighbor;
+        const Index ghostSide = owner < numDomainCells ? neighbor : owner;
 
         cooRows[2 * numInternalFaces + m] =
             static_cast<PetscInt>(globalCells.toGlobal(ownedSide));
         cooCols[2 * numInternalFaces + m] =
             static_cast<PetscInt>
             (
-                ghostGlobals[ghostSide - numOwnedCells]
+                ghostGlobals[ghostSide - numDomainCells]
             );
     }
 
-    for (Index cellIdx = 0; cellIdx < numOwnedCells; ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < numDomainCells; ++cellIdx)
     {
         const auto diagIdx =
             static_cast<PetscInt>(globalCells.toGlobal(cellIdx));
@@ -129,7 +133,7 @@ Matrix::Matrix
         cooCols[diagOffset_ + cellIdx] = diagIdx;
     }
 
-    const auto n = static_cast<PetscInt>(numOwnedCells);
+    const auto n = static_cast<PetscInt>(numDomainCells);
 
     CheckPETSc(MatCreate(PETScRuntime::comm(), &matrixA_));
     CheckPETSc(MatSetSizes(matrixA_, n, n, PETSC_DECIDE, PETSC_DECIDE));
@@ -147,7 +151,7 @@ Matrix::Matrix
 
     // COO value array with its processor-face scribble tail
     cooValues_.assign(numCoo + numProcessorFaces, S(0.0));
-    vectorB_.assign(numOwnedCells, S(0.0));
+    vectorB_.assign(numDomainCells, S(0.0));
 
     // RHS handle wraps vectorB_ storage: staging writes are the vector
     CheckPETSc(VecCreate(PETScRuntime::comm(), &rhsVec_));
@@ -159,13 +163,16 @@ Matrix::Matrix
 
 Matrix::~Matrix() noexcept
 {
-    if (VecDestroy(&rhsVec_) != PETSC_SUCCESS)
+    // Restore vectorB_ before destroying the PETSc vector
+    if (rhsVec_ != nullptr)
     {
-        Warning("VecDestroy failed");
+        VecResetArray(rhsVec_);
+        VecDestroy(&rhsVec_);
     }
-    if (MatDestroy(&matrixA_) != PETSC_SUCCESS)
+
+    if (matrixA_ != nullptr)
     {
-        Warning("MatDestroy failed");
+        MatDestroy(&matrixA_);
     }
 }
 
@@ -175,14 +182,14 @@ void Matrix::buildMatrix(const TransportEquation& equation)
 {
     lastRelaxationFactor_ = S(0.0);
 
-    const Count numOwnedCells = mesh_.numOwnedCells();
+    const Count numDomainCells = mesh_.numDomainCells();
     const Count numInternalFaces = internalFaces_.size();
     const Count numProcessorFaces = processorFaces_.size();
     const Count numBoundaryFaces = boundaryFaces_.size();
 
-    // Owned rows start from the cell source and any transient term; the
+    // Domain rows start from the cell source and any transient term; the
     // face loops accumulate on top, so this must run before all of them
-    for (Index cellIdx = 0; cellIdx < numOwnedCells; ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < numDomainCells; ++cellIdx)
     {
         Scalar diag = S(0.0);
         Scalar rhs = equation.source[cellIdx];
@@ -226,11 +233,11 @@ void Matrix::buildMatrix(const TransportEquation& equation)
         );
     }
 
-    // Same math across a cut, but only the owned cell's row has a slot
+    // Same math across a cut, but only the domain cell's row has a slot
     for (Index m = 0; m < numProcessorFaces; ++m)
     {
         const Face& face = mesh_.faces()[processorFaces_[m]];
-        const bool ownerIsLocal = face.ownerCell() < numOwnedCells;
+        const bool ownerIsLocal = face.ownerCell() < numDomainCells;
         const Index cooSlot = faceSlot_[processorFaces_[m]];
 
         assembleInternalFace
@@ -256,7 +263,7 @@ void Matrix::relax(Scalar alpha, const ScalarField& phiPrevIter)
         FatalError("Matrix::relax: alpha must be positive");
     }
 
-    const Count numCells = mesh_.numOwnedCells();
+    const Count numCells = mesh_.numDomainCells();
 
     if (phiPrevIter.size() < numCells)
     {
@@ -294,7 +301,7 @@ void Matrix::setValues
     const ScalarList& fractions
 )
 {
-    const Count numOwnedCells = mesh_.numOwnedCells();
+    const Count numDomainCells = mesh_.numDomainCells();
     const bool hasFractions = !fractions.empty();
 
     for (Index i = 0; i < cellIndices.size(); ++i)
@@ -325,7 +332,7 @@ void Matrix::setValues
                 const Index neighborIdx =
                     isOwner ? face.neighborCell().value() : face.ownerCell();
 
-                if (neighborIdx >= numOwnedCells)
+                if (neighborIdx >= numDomainCells)
                 {
                     // Processor face: the neighbor rank moves its own side
                     cooValues_[slot] = S(0.0);
@@ -367,8 +374,8 @@ void Matrix::setValues
         const Face& face = mesh_.faces()[faceIdx];
         const Index owner = face.ownerCell();
         const Index neighbor = face.neighborCell().value();
-        const Index ownedSide = owner < numOwnedCells ? owner : neighbor;
-        const Index ghostSide = owner < numOwnedCells ? neighbor : owner;
+        const Index ownedSide = owner < numDomainCells ? owner : neighbor;
+        const Index ghostSide = owner < numDomainCells ? neighbor : owner;
 
         if (ghostFractions[ghostSide] <= S(1.0) - rootSmallValue_)
         {
@@ -403,10 +410,10 @@ void Matrix::explicitJacobiUpdate
     ScalarField& phiNew
 ) const
 {
-    const Count numOwnedCells = mesh_.numOwnedCells();
+    const Count numDomainCells = mesh_.numDomainCells();
 
     // phiNew_P = (b_P - sum_{N != P} A_PN phiOld_N) / A_PP
-    for (Index cellIdx = 0; cellIdx < numOwnedCells; ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < numDomainCells; ++cellIdx)
     {
         const Scalar diagonal = cooValues_[diagOffset_ + cellIdx];
         Scalar offDiagonalSum = S(0.0);
@@ -426,7 +433,7 @@ void Matrix::explicitJacobiUpdate
                 isOwner ? face.neighborCell().value() : face.ownerCell();
             const Index slot = faceSlot_[faceIdx];
             const Index rowSlot =
-                neighborIdx >= numOwnedCells
+                neighborIdx >= numDomainCells
               ? slot
               : (isOwner ? slot : slot + 1);
 
@@ -448,7 +455,7 @@ void Matrix::assembleInternalFace
     const TransportEquation& equation
 )
 {
-    const Count numOwnedCells = mesh_.numOwnedCells();
+    const Count numDomainCells = mesh_.numDomainCells();
     const Index ownerIdx = face.ownerCell();
     const Index neighborIdx = face.neighborCell().value();
     const Vector Sf = face.normal() * face.projectedArea();
@@ -519,13 +526,13 @@ void Matrix::assembleInternalFace
     }
 
     // A ghost row belongs to the neighbor rank, so it takes nothing here
-    if (ownerIdx < numOwnedCells)
+    if (ownerIdx < numDomainCells)
     {
         cooValues_[diagOffset_ + ownerIdx] += aDiff + aPConv;
         vectorB_[ownerIdx] += rhsOwner;
     }
 
-    if (neighborIdx < numOwnedCells)
+    if (neighborIdx < numDomainCells)
     {
         cooValues_[diagOffset_ + neighborIdx] += aDiff - aNConv;
         vectorB_[neighborIdx] += rhsNeighbor;

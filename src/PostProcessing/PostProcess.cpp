@@ -83,8 +83,8 @@ void reportStatistics(const MomentumTransport& solver)
     const ScalarField& pressure = solver.pressure();
 
     // Emptiness is decided globally: a per-rank return would deadlock
-    const Count numOwnedCells = solver.mesh().numOwnedCells();
-    const Count totalCells = globalSum(numOwnedCells);
+    const Count numDomainCells = solver.mesh().numDomainCells();
+    const Count totalCells = globalSum(numDomainCells);
 
     if (totalCells == 0)
     {
@@ -96,14 +96,15 @@ void reportStatistics(const MomentumTransport& solver)
         return;
     }
 
-    const ScalarField velocityMag = VTK::velocityMagnitude(Ux, Uy, Uz);
+    const ScalarField velocityMag =
+        VTK::velocityMagnitude(solver.mesh(), Ux, Uy, Uz);
 
     Scalar maximumVelocity = S(0.0);
     Scalar averageVelocity = S(0.0);
     Scalar maximumPressure = std::numeric_limits<Scalar>::lowest();
     Scalar minimumPressure = std::numeric_limits<Scalar>::max();
 
-    for (Index cellIdx = 0; cellIdx < numOwnedCells; ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < numDomainCells; ++cellIdx)
     {
         const Scalar vmag = velocityMag[cellIdx];
         maximumVelocity = std::max(maximumVelocity, vmag);
@@ -194,7 +195,8 @@ void appendTimeStep
     const ScalarField& Uz = solver.Uz();
     const ScalarField& pressure = solver.pressure();
 
-    const ScalarField velocityMag = VTK::velocityMagnitude(Ux, Uy, Uz);
+    const ScalarField velocityMag =
+        VTK::velocityMagnitude(solver.mesh(), Ux, Uy, Uz);
 
     VTK::ScalarFieldMap scalarFieldsToVtk;
     scalarFieldsToVtk["pressure"] = &pressure;

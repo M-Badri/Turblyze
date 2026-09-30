@@ -212,41 +212,41 @@ private:
 // Pressure-correction fields
 
     /// Pressure correction field
-    ScalarField pCorr_;
+    ScalarField pCorr_{mesh_};
 
     /// Pressure correction gradient field
-    VectorField gradPCorr_;
+    VectorField gradPCorr_{mesh_};
 
     /// Pressure gradient field
-    VectorField gradP_;
+    VectorField gradP_{mesh_};
 
 // Face velocity fields
 
     /// Face velocity (current iteration)
-    FaceData<Scalar> UxAvgf_;
-    FaceData<Scalar> UyAvgf_;
-    FaceData<Scalar> UzAvgf_;
+    FaceData<Scalar> UxAvgf_{mesh_};
+    FaceData<Scalar> UyAvgf_{mesh_};
+    FaceData<Scalar> UzAvgf_{mesh_};
 
     /// Face velocity (previous iteration)
-    FaceData<Scalar> UxAvgPrevIterf_;
-    FaceData<Scalar> UyAvgPrevIterf_;
-    FaceData<Scalar> UzAvgPrevIterf_;
+    FaceData<Scalar> UxAvgPrevIterf_{mesh_};
+    FaceData<Scalar> UyAvgPrevIterf_{mesh_};
+    FaceData<Scalar> UzAvgPrevIterf_{mesh_};
 
 // Mass flux fields
 
     /// Mass flux through faces (Rhie-Chow)
-    FaceFluxField RhieChowFlowRate_;
+    FaceFluxField RhieChowFlowRate_{mesh_};
 
     /// Mass flux from the previous iteration
-    FaceFluxField RhieChowFlowRatePrevIter_;
+    FaceFluxField RhieChowFlowRatePrevIter_{mesh_};
 
 // Momentum diagonal coefficients
 
     /// Momentum diagonal coefficients
-    ScalarField DU_;
+    ScalarField DU_{mesh_};
 
     /// Face momentum diagonal coefficients
-    FaceFluxField DUf_;
+    FaceFluxField DUf_{mesh_};
 
     /// True when p' has no Dirichlet anchor on any rank (pure Neumann)
     bool pCorrNeedsNullSpace_ = false;
@@ -254,20 +254,20 @@ private:
 // Momentum assembly fields
 
     /// Effective viscosity (laminar + turbulent)
-    ScalarField nuEff_;
+    ScalarField nuEff_{mesh_};
 
     /// Effective viscosity at face centres
-    FaceData<Scalar> nuEffFace_;
+    FaceData<Scalar> nuEffFace_{mesh_};
 
     /// Momentum source terms
-    ScalarField UxSource_;
-    ScalarField UySource_;
-    ScalarField UzSource_;
+    ScalarField UxSource_{mesh_};
+    ScalarField UySource_{mesh_};
+    ScalarField UzSource_{mesh_};
 
 // Pressure-correction assembly fields
 
     /// Mass imbalance source for the pressure correction equation
-    ScalarField massImbalanceSrc_;
+    ScalarField massImbalanceSrc_{mesh_};
 
     /// Track pressure correction RMS before reset
     Scalar lastPressureCorrectionRMS_ = S(1e9);

@@ -8,12 +8,6 @@
  ------------------------------------------------------------------------------
  * @file MeshFixtures.h
  * @brief Programmatic hex-box meshes for unit tests
-
- * @details The smallest shipped mesh is far too large to be a unit fixture,
- * so tests build tiny structured hex boxes in memory.
- *
- * RAII owner of one populated Mesh: releases the global cell/face counts on
- * destruction so the next TEST_CASE can build its own mesh.
  *****************************************************************************/
 
 #pragma once
@@ -22,6 +16,7 @@
 
 // Project headers
 #include "Mesh.h"
+#include "MeshCreator.h"
 #include "Scalar.h"
 #include "Integer.h"
 
@@ -51,17 +46,10 @@ inline const Name zMax = "zMax";
     Scalar spacing = S(1.0)
 );
 
-/// Build this rank's submesh of a 1D cell chain: one owned cell whose global
-/// index equals the rank, plus one ghost stub per neighbouring rank. Only the
-/// data exchangeHalos reads (processor patches, owned/ghost cell counts) is
-/// populated; nodes, faces, and cell geometry are intentionally empty. Every
-/// rank must build it together (the ghost count follows the rank position).
+/// Build this rank's submesh of a 1D cell chain
 [[nodiscard]] Mesh makeDecomposedChainMesh();
 
-/// Build this rank's submesh of the same hex box, partitioned by METIS through
-/// the production decompose-distribute path. Serial runs get the whole box, so
-/// np = 1 is bit-identical to makeHexBoxMesh. Collective: every rank must
-/// build it together.
+/// Build this rank's submesh of the same hex box, partitioned by METIS
 [[nodiscard]] Mesh makeDecomposedHexBoxMesh
 (
     Count nx,
@@ -84,7 +72,7 @@ public:
         mesh_(makeHexBoxMesh(nx, ny, nz, spacing))
     {}
 
-    /// Not copyable movable
+    /// Not copyable
     TestMesh(const TestMesh&) = delete;
     TestMesh& operator=(const TestMesh&) = delete;
 
@@ -92,22 +80,13 @@ public:
     TestMesh(TestMesh&&) = delete;
     TestMesh& operator=(TestMesh&&) = delete;
 
-    /// Release the global cell/face counts
-    ~TestMesh() noexcept
-    {
-        Mesh::resetCounts();
-    }
+    /// Destructor
+    ~TestMesh() noexcept = default;
 
 // ***************************** Accessor Methods *****************************
 
     /// The owned mesh
     [[nodiscard]] const Mesh& mesh() const noexcept
-    {
-        return mesh_;
-    }
-
-    /// The owned mesh (mutable for face-patch linking)
-    [[nodiscard]] Mesh& mesh() noexcept
     {
         return mesh_;
     }
@@ -142,11 +121,8 @@ public:
     DecomposedChainMesh(DecomposedChainMesh&&) = delete;
     DecomposedChainMesh& operator=(DecomposedChainMesh&&) = delete;
 
-    /// Release the global cell/face counts
-    ~DecomposedChainMesh() noexcept
-    {
-        Mesh::resetCounts();
-    }
+    /// Destructor
+    ~DecomposedChainMesh() noexcept = default;
 
 // ***************************** Accessor Methods *****************************
 
@@ -160,7 +136,6 @@ public:
 
 private:
 
-    /// The single populated submesh
     Mesh mesh_;
 };
 
@@ -186,11 +161,8 @@ public:
     DecomposedBoxMesh(DecomposedBoxMesh&&) = delete;
     DecomposedBoxMesh& operator=(DecomposedBoxMesh&&) = delete;
 
-    /// Release the global cell/face counts
-    ~DecomposedBoxMesh() noexcept
-    {
-        Mesh::resetCounts();
-    }
+    /// Destructor
+    ~DecomposedBoxMesh() noexcept = default;
 
 // ***************************** Accessor Methods *****************************
 
@@ -200,16 +172,9 @@ public:
         return mesh_;
     }
 
-    /// The owned submesh (mutable for face-patch linking)
-    [[nodiscard]] Mesh& mesh() noexcept
-    {
-        return mesh_;
-    }
-
 // ****************************** Private Members *****************************
 
 private:
 
-    /// The single populated submesh
     Mesh mesh_;
 };

@@ -71,7 +71,7 @@ TEST_CASE("Upwind correction is always zero", "[schemes]")
 {
     const TestMesh box(2, 1, 1);
     const Face& face = internalFace(box.mesh());
-    const ScalarField phi;
+    const ScalarField phi(box.mesh());
 
     const Upwind up;
 
@@ -111,7 +111,7 @@ TEST_CASE("SecondOrderUpwind uses the upwind gradient", "[schemes]")
 {
     const TestMesh box(2, 1, 1);
     const Face& face = internalFace(box.mesh());
-    const ScalarField phi;
+    const ScalarField phi(box.mesh());
 
     const SecondOrderUpwind so;
 
@@ -157,7 +157,7 @@ TEST_CASE("CentralDifference vanishes for constant phi", "[schemes]")
 
     // A uniform field: the linearly interpolated face value equals the upwind
     // cell value, so the deferred correction cancels for any non-zero flux
-    ScalarField phi;
+    ScalarField phi(box.mesh());
     phi[0] = S(4.0);
     phi[1] = S(4.0);
 
@@ -179,7 +179,7 @@ TEST_CASE("LUST blends CDS and SecondOrderUpwind", "[schemes]")
     const TestMesh box(2, 1, 1);
     const Face& face = internalFace(box.mesh());
 
-    ScalarField phi;
+    ScalarField phi(box.mesh());
     phi[0] = S(2.0);
     phi[1] = S(6.0);
 

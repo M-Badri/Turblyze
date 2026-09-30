@@ -85,7 +85,7 @@ kOmegaSST::kOmegaSST
             wallCellFraction()[i];
     }
 
-    exchangeHalos(mesh, {&wallConstraintFraction_});
+    Halo::exchange({&wallConstraintFraction_});
 
     // Initialize turbulence fields with initial conditions
     k().setAll(initialK);
@@ -136,18 +136,18 @@ void kOmegaSST::solve
 
     // Pre-set wall-cell omega via area-weighted lerp
     applyOmegaWallCellValues();
-    exchangeHalos(mesh(), {&omega_});
+    Halo::exchange({&omega_});
 
     // Override k production at wall-adjacent cells
     overrideWallCellProduction(Ux, Uy, Uz, Pk);
 
     // Compute gradients and cross-diffusion
     gradientScheme().fieldGradient(Field::k, k(), gradK());
-    VectorField gradOmega;
+    VectorField gradOmega(mesh());
     gradientScheme().fieldGradient(Field::omega, omega_, gradOmega);
 
     // The k/omega deferred corrections read both gradients at cut faces
-    exchangeHalos(mesh(), {&gradK(), &gradOmega});
+    Halo::exchange({&gradK(), &gradOmega});
 
     const ScalarField CDkOmega = crossDiffusion(gradOmega);
 
@@ -166,26 +166,26 @@ void kOmegaSST::solve
     // Solve omega transport equation
     solveOmegaEquation(flowRateFace, divU, f1, CDkOmega, POmega, gradOmega);
     boundOmega();
-    exchangeHalos(mesh(), {&omega_});
+    Halo::exchange({&omega_});
 
     // Solve k transport equation
     solveKEquation(flowRateFace, divU, f1, Pk);
     boundK();
     boundOmega();
-    exchangeHalos(mesh(), {&k(), &omega_});
+    Halo::exchange({&k(), &omega_});
 
     // Update turbulent viscosity with SST limiter
     nut() = computeTurbulentViscosity(f23, strainRateSq);
 
     // Update wall-function nut on wall faces
     updateNutWall();
-    exchangeHalos(mesh(), {&nut()});
+    Halo::exchange({&nut()});
 
     // Compute normalised k/omega change against the pre-solve snapshots
     updateResiduals(omega_, omegaPrev_);
 
     // Log min/max/mean of k, omega, nut
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
 
     if (debug())
     {
@@ -345,8 +345,7 @@ void kOmegaSST::overrideWallCellProduction
     ScalarField& Pk
 )
 {
-    ScalarField wallProductionAccum;
-    wallProductionAccum.setAll(S(0.0));
+    ScalarField wallProductionAccum(mesh(), S(0.0));
     std::vector<char> hasWallOverride(mesh().numCells(), 0);
 
     for (Index faceIdx : wallFunctionFaceIndices())
@@ -405,8 +404,8 @@ ScalarField kOmegaSST::kProduction
     const ScalarField& strainRateSq
 ) const
 {
-    const Count numCells = mesh().numOwnedCells();
-    ScalarField Pk;
+    const Count numCells = mesh().numDomainCells();
+    ScalarField Pk{mesh()};
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -423,8 +422,8 @@ ScalarField kOmegaSST::crossDiffusion
     const VectorField& gradOmega
 ) const
 {
-    const Count numCells = mesh().numOwnedCells();
-    ScalarField CDkOmega;
+    const Count numCells = mesh().numDomainCells();
+    ScalarField CDkOmega{mesh()};
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -443,9 +442,9 @@ ScalarField kOmegaSST::blendingF1
     const ScalarField& CDkOmega
 ) const
 {
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
     constexpr Scalar CDkOmegaMin = S(1e-10);
-    ScalarField f1;
+    ScalarField f1{mesh()};
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -482,8 +481,8 @@ ScalarField kOmegaSST::blendingF1
 
 ScalarField kOmegaSST::blendingF2() const
 {
-    const Count numCells = mesh().numOwnedCells();
-    ScalarField f2;
+    const Count numCells = mesh().numDomainCells();
+    ScalarField f2{mesh()};
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -512,8 +511,8 @@ ScalarField kOmegaSST::blendingF2() const
 
 ScalarField kOmegaSST::blendingF3() const
 {
-    const Count numCells = mesh().numOwnedCells();
-    ScalarField f3;
+    const Count numCells = mesh().numDomainCells();
+    ScalarField f3{mesh()};
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -541,8 +540,8 @@ ScalarField kOmegaSST::blendingF23
     const ScalarField& f3
 ) const
 {
-    const Count numCells = mesh().numOwnedCells();
-    ScalarField f23;
+    const Count numCells = mesh().numDomainCells();
+    ScalarField f23{mesh()};
 
     if (useF3_)
     {
@@ -569,8 +568,8 @@ ScalarField kOmegaSST::omegaProduction
     const ScalarField& strainRateSq
 ) const
 {
-    const Count numCells = mesh().numOwnedCells();
-    ScalarField POmega;
+    const Count numCells = mesh().numDomainCells();
+    ScalarField POmega{mesh()};
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -591,8 +590,8 @@ ScalarField kOmegaSST::Gamma
     Scalar sigma2
 ) const
 {
-    const Count numCells = mesh().numOwnedCells();
-    ScalarField Gamma;
+    const Count numCells = mesh().numDomainCells();
+    ScalarField Gamma{mesh()};
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -613,7 +612,7 @@ void kOmegaSST::limitProduction
     ScalarField& POmega
 ) const
 {
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -647,13 +646,13 @@ void kOmegaSST::solveOmegaEquation
     const VectorField& gradOmega
 )
 {
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
     ScalarField GammaOmega =
         Gamma(f1, coeffs_.sigmaOmega1, coeffs_.sigmaOmega2);
-    exchangeHalos(mesh(), {&GammaOmega});
+    Halo::exchange({&GammaOmega});
     cellToFaceDiffusion(GammaOmega, gammaOmegaFace_);
 
-    const ScalarField omegaSource{S(0.0)};
+    const ScalarField omegaSource{mesh(), S(0.0)};
 
     TransportEquation equationOmega
     {
@@ -753,7 +752,7 @@ void kOmegaSST::solveOmegaEquation
 
 void kOmegaSST::boundOmega()
 {
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -774,13 +773,13 @@ void kOmegaSST::solveKEquation
     const ScalarField& Pk
 )
 {
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
     ScalarField GammaK =
         Gamma(f1, coeffs_.sigmaK1, coeffs_.sigmaK2);
-    exchangeHalos(mesh(), {&GammaK});
+    Halo::exchange({&GammaK});
     cellToFaceDiffusion(GammaK, gammaKFace_);
 
-    const ScalarField kSource{S(0.0)};
+    const ScalarField kSource{mesh(), S(0.0)};
 
     TransportEquation equationK
     {
@@ -848,7 +847,7 @@ void kOmegaSST::solveKEquation
 
 void kOmegaSST::boundK()
 {
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -865,8 +864,8 @@ ScalarField kOmegaSST::computeTurbulentViscosity
 {
     // SST turbulent viscosity:
     // nut = a1*k / max(a1*omega, F23*sqrt(S2))
-    const Count numCells = mesh().numOwnedCells();
-    ScalarField nut;
+    const Count numCells = mesh().numDomainCells();
+    ScalarField nut{mesh()};
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {

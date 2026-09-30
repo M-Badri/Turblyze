@@ -39,16 +39,10 @@ public:
 
 // ************************* Special Member Functions *************************
 
-    /// Construct zero-initialized field
-    FaceData()
+    /// Construct field sized to mesh with optional initial value
+    explicit FaceData(const Mesh& mesh, const T& initialValue = T{})
     :
-        internalField_(Mesh::faceCount(), T{})
-    {}
-
-    /// Construct field with initial value
-    explicit FaceData(const T& initialValue)
-    :
-        internalField_(Mesh::faceCount(), initialValue)
+        internalField_(mesh.numFaces(), initialValue)
     {}
 
 // ****************************** Setter Methods ******************************

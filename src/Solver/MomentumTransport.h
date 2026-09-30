@@ -57,6 +57,17 @@ struct TransientFields
     ScalarField UyDdtPrevStep;
     ScalarField UzDdtPrevStep;
     FaceFluxField fluxPrevStep;
+
+    explicit TransientFields(const Mesh& mesh)
+    :
+        UxPrevStep(mesh),
+        UyPrevStep(mesh),
+        UzPrevStep(mesh),
+        UxDdtPrevStep(mesh),
+        UyDdtPrevStep(mesh),
+        UzDdtPrevStep(mesh),
+        fluxPrevStep(mesh)
+    {}
 };
 
 // ************************* class MomentumTransport **************************
@@ -211,10 +222,10 @@ protected:
 
 // **************************** Protected Accessors ***************************
 
-    /// Total owned cells across every rank (cached: run-invariant)
-    [[nodiscard]] Count totalOwnedCells() const noexcept
+    /// Total domain cells across every rank (cached: run-invariant)
+    [[nodiscard]] Count totalDomainCells() const noexcept
     {
-        return totalOwnedCells_;
+        return totalDomainCells_;
     }
 
     /// Boundary-condition manager (mutable: the solver drives the snapshot)
@@ -317,17 +328,19 @@ protected:
         return gradU_;
     }
 
-// ****************************** Private Members *****************************
+// ***************************** Protected Members ***************************
 
-private:
-
-// Dependencies
+protected:
 
     /// Mesh view (nodes, faces, cells)
     const Mesh& mesh_;
 
     /// Reference to BCs (mutable: coefficient re-evaluation)
     BoundaryConditions& bcManager_;
+
+// ****************************** Private Members *****************************
+
+private:
 
     /// Time-derivative discretization scheme
     const TimeScheme& timeScheme_;
@@ -366,30 +379,30 @@ private:
 // Solution fields
 
     /// Velocity fields
-    ScalarField Ux_;
-    ScalarField Uy_;
-    ScalarField Uz_;
+    ScalarField Ux_{mesh_};
+    ScalarField Uy_{mesh_};
+    ScalarField Uz_{mesh_};
 
     /// Pressure field
-    ScalarField p_;
+    ScalarField p_{mesh_};
 
     /// Velocity from previous iteration (for the velocity residual)
-    ScalarField UxPrevIter_;
-    ScalarField UyPrevIter_;
-    ScalarField UzPrevIter_;
+    ScalarField UxPrevIter_{mesh_};
+    ScalarField UyPrevIter_{mesh_};
+    ScalarField UzPrevIter_{mesh_};
 
 // Gradient fields
 
     /// Per-component velocity gradients
-    VectorField gradUx_;
-    VectorField gradUy_;
-    VectorField gradUz_;
+    VectorField gradUx_{mesh_};
+    VectorField gradUy_{mesh_};
+    VectorField gradUz_{mesh_};
 
     /// Velocity gradient tensor field
-    TensorField gradU_;
+    TensorField gradU_{mesh_};
 
-    /// Total owned cells across every rank (reduced once at construction)
-    Count totalOwnedCells_ = 0;
+    /// Total domain cells across every rank (reduced once at construction)
+    Count totalDomainCells_ = 0;
 
 // Residual tracking for convergence
 

@@ -137,13 +137,13 @@ public:
     /// Get the matrix diagonal (const)
     [[nodiscard]] std::span<const Scalar> diagonal() const noexcept
     {
-        return {cooValues_.data() + diagOffset_, mesh_.numOwnedCells()};
+        return {cooValues_.data() + diagOffset_, mesh_.numDomainCells()};
     }
 
     /// Get the staged matrix diagonal
     [[nodiscard]] std::span<Scalar> diagonal() noexcept
     {
-        return {cooValues_.data() + diagOffset_, mesh_.numOwnedCells()};
+        return {cooValues_.data() + diagOffset_, mesh_.numDomainCells()};
     }
 
 // ****************************** Private Members *****************************

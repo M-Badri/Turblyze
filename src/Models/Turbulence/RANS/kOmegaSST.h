@@ -184,24 +184,25 @@ private:
 // Turbulence fields
 
     /// Specific dissipation rate
-    ScalarField omega_{S(1.0)};
+    ScalarField omega_{mesh_, S(1.0)};
 
 // Residual tracking
 
     /// Previous-iteration omega snapshot for residual computation
-    ScalarField omegaPrev_;
+    ScalarField omegaPrev_{mesh_};
 
     /// Face diffusivity for the k equation
-    FaceFluxField gammaKFace_;
+    FaceFluxField gammaKFace_{mesh_};
 
     /// Face diffusivity for the omega equation
-    FaceFluxField gammaOmegaFace_;
+    FaceFluxField gammaOmegaFace_{mesh_};
 
 // Wall distance and wall-function state
 
     /// Dynamic omega wall-function values on faces
     FaceData<Scalar> omegaWall_
     {
+        mesh_,
         std::numeric_limits<Scalar>::quiet_NaN()
     };
 
@@ -209,7 +210,7 @@ private:
     ScalarList wallCellOmega_;
 
     /// Wall-constraint fraction as a cell field, ghosts exchanged once
-    ScalarField wallConstraintFraction_;
+    ScalarField wallConstraintFraction_{mesh_};
 
     /// Precomputed Cmu^0.25 (avoids repeated std::pow calls)
     const Scalar Cmu25_ = std::sqrt(std::sqrt(coeffs_.betaStar));

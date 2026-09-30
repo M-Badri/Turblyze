@@ -73,8 +73,8 @@ TEST_CASE("Hex box reports the expected cell and face counts", "[mesh]")
     // 2x2x2 = 8 cells; 12 internal + 24 boundary faces = 36
     REQUIRE(box.mesh().numCells() == 8);
     REQUIRE(box.mesh().numFaces() == 36);
-    REQUIRE(box.mesh().numOwnedCells() == box.mesh().numCells());
-    REQUIRE(box.mesh().numGhostCells() == 0);
+    REQUIRE(box.mesh().numDomainCells() == box.mesh().numCells());
+    REQUIRE(box.mesh().numHaloCells() == 0);
 
     // Every interior cell of the box carries a positive volume
     for (Index cellIdx = 0; cellIdx < box.mesh().numCells(); ++cellIdx)

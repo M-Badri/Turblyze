@@ -53,7 +53,7 @@ namespace
 {
 
 /// Register a zero-gradient BC for k, omega, and nut on every wall patch.
-void registerTurbulenceBoundaries(BoundaryConditions& bc, Mesh& mesh)
+void registerTurbulenceBoundaries(BoundaryConditions& bc, const Mesh& mesh)
 {
     for (const BoundaryPatch& patch : mesh.patches())
     {
@@ -195,7 +195,7 @@ TEST_CASE
     // one of the six planes - checked per owned cell, at any rank count
     if (wallDistance != nullptr)
     {
-        for (Index cellIdx = 0; cellIdx < box.mesh().numOwnedCells(); ++cellIdx)
+        for (Index cellIdx = 0; cellIdx < box.mesh().numDomainCells(); ++cellIdx)
         {
             CHECK_THAT
             (
@@ -215,7 +215,7 @@ TEST_CASE
 
     // Initial field values
 
-    for (Index cellIdx = 0; cellIdx < box.mesh().numOwnedCells(); ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < box.mesh().numDomainCells(); ++cellIdx)
     {
         CHECK_THAT
         (
@@ -236,13 +236,13 @@ TEST_CASE
 
     // One solve with a hand-built shear
 
-    const ScalarField Ux;
-    const ScalarField Uy;
-    const ScalarField Uz;
-    const FaceFluxField flowRateFace(S(0.0));
+    const ScalarField Ux(box.mesh());
+    const ScalarField Uy(box.mesh());
+    const ScalarField Uz(box.mesh());
+    const FaceFluxField flowRateFace(box.mesh(), S(0.0));
 
     // Pure shear du_x/dy = 2, so the strain-rate magnitude is nonzero
-    TensorField gradU;
+    TensorField gradU(box.mesh());
     for (Index cellIdx = 0; cellIdx < box.mesh().numCells(); ++cellIdx)
     {
         gradU[cellIdx] = Tensor
@@ -256,7 +256,7 @@ TEST_CASE
     model.solve(Ux, Uy, Uz, flowRateFace, gradU);
 
     // k and omega stay strictly positive; nut stays finite and non-negative
-    for (Index cellIdx = 0; cellIdx < box.mesh().numOwnedCells(); ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < box.mesh().numDomainCells(); ++cellIdx)
     {
         REQUIRE(view.k()[cellIdx] > S(0.0));
         REQUIRE(view.dissipation()[cellIdx] > S(0.0));

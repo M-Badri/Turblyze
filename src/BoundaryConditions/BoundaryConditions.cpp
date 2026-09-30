@@ -14,7 +14,6 @@
 
 // Implementation header
 #include "BoundaryConditions.h"
-#include "Mesh.h"
 
 // Standard library headers
 #include <format>
@@ -164,9 +163,9 @@ const BoundaryType& BoundaryConditions::boundaryType
 }
 
 
-void BoundaryConditions::linkFaces(Mesh& mesh)
+void BoundaryConditions::linkFaces(const Mesh& mesh)
 {
-    FaceList& faces = mesh.faces();
+    const FaceList& faces = mesh.faces();
     for (const auto& patch : patches_)
     {
         if (patch.firstFaceIdx() > patch.lastFaceIdx())
@@ -192,15 +191,7 @@ void BoundaryConditions::linkFaces(Mesh& mesh)
             );
         }
 
-        for
-        (
-            Index faceIdx = patch.firstFaceIdx();
-            faceIdx <= patch.lastFaceIdx();
-            ++faceIdx
-        )
-        {
-            faces[faceIdx].setPatch(patch);
-        }
+        // Faces are linked to patches during mesh preparation by MeshCreator::linkBoundaryFaces
     }
 
     linked_ = true;

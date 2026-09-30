@@ -97,7 +97,7 @@ void GradientScheme::limitGradient
     VectorField& gradPhi
 ) const
 {
-    const Count numCells = mesh_.numOwnedCells();
+    const Count numCells = mesh_.numDomainCells();
 
     // Symmetry faces excluded: mirroring needs all three components
     const bool isVelocity =
@@ -185,7 +185,7 @@ void GradientScheme::fieldGradient
     VectorField& gradPhi
 ) const
 {
-    const Count numCells = mesh_.numOwnedCells();
+    const Count numCells = mesh_.numDomainCells();
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {

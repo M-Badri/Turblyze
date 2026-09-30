@@ -41,4 +41,7 @@ namespace Comm
     /// True on the master rank (rank 0)
     [[nodiscard]] bool master();
 
+    /// Abort all ranks across MPI_COMM_WORLD and terminate the process
+    [[noreturn]] void abort(int exitCode = 1) noexcept;
+
 } // namespace Comm

@@ -112,11 +112,11 @@ void LeastSquares::precomputeInverseATA()
     // Sized over every cell; ghosts are not gradient sites and stay zero
     invATA_.resize(mesh().numCells());
 
-    const Count numOwnedCells = mesh().numOwnedCells();
+    const Count numDomainCells = mesh().numDomainCells();
 
     Count degenerateCells = 0;
 
-    for (Index cellIdx = 0; cellIdx < numOwnedCells; ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < numDomainCells; ++cellIdx)
     {
         const Cell& cell = mesh().cells()[cellIdx];
 

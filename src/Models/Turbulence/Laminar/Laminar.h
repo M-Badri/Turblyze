@@ -92,7 +92,7 @@ public:
         const ScalarField& Uz
     ) const override
     {
-        FaceData<Scalar> shearStress(S(0.0));
+        FaceData<Scalar> shearStress(mesh_, S(0.0));
 
         for (const Face& face : mesh_.faces())
         {
@@ -137,6 +137,6 @@ private:
     Scalar nu_;
 
     /// Zero turbulent viscosity field
-    ScalarField nut_{S(0.0)};
+    ScalarField nut_{mesh_, S(0.0)};
 
 };

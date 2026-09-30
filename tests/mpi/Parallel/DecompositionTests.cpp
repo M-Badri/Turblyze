@@ -6,43 +6,42 @@
                         SPDX-License-Identifier: Apache-2.0
 
  ------------------------------------------------------------------------------
- * @file DecompositionChecker.cpp
- * @brief Exchange-and-compare validation across every inter-rank cut
+ * @file DecompositionTests.cpp
+ * @brief Multi-rank tests validating mesh decomposition and inter-rank cuts
  *****************************************************************************/
 
 // ********************************** Headers *********************************
 
-// Implementation header
-#include "DecompositionChecker.h"
-
 // Standard library headers
+#include <algorithm>
 #include <cmath>
-#include <string>
 #include <vector>
 
 // External library headers
+#include <catch2/catch_test_macros.hpp>
 #include <mpi.h>
 
 // Project headers
 #include "BoundaryConditions.h"
 #include "Comm.h"
-#include "ErrorHandler.h"
 #include "Field.h"
+#include "HaloExchange.h"
 #include "LeastSquares.h"
-#include "Logger.h"
 #include "MPIScalarType.h"
+#include "MeshFixtures.h"
 #include "Reduce.h"
+#include "Scalar.h"
+#include "TestTolerances.h"
 
-// ****************************** Internal Helpers ****************************
+// ***************************** Internal Helpers *****************************
 
 namespace
 {
 
 constexpr int exchangeTag = 42;
 
-
 /// Swap scalar payloads across one cut; the two sides may differ in size
-std::vector<Scalar> exchangeWithNeighbor
+[[nodiscard]] std::vector<Scalar> exchangeWithNeighbor
 (
     const ProcessorPatch& patch,
     const std::vector<Scalar>& sendBuffer,
@@ -51,7 +50,6 @@ std::vector<Scalar> exchangeWithNeighbor
 {
     std::vector<Scalar> recvBuffer(recvCount);
 
-    // Sendrecv is cycle-safe: patch ordering cannot deadlock the loop
     MPI_Sendrecv
     (
         sendBuffer.data(),
@@ -71,36 +69,44 @@ std::vector<Scalar> exchangeWithNeighbor
     return recvBuffer;
 }
 
+} // namespace
 
-/// Check the owned-cell counts sum to the complete mesh
-void checkCellAccounting
-(
-    const Mesh& mesh,
-    Count totalCellCount
-)
+// ****************************** Cell Accounting *****************************
+
+TEST_CASE("Decomposition preserves total cell count", "[mpi][parallel]")
 {
-    const Count ownedTotal = globalSum(mesh.numOwnedCells());
+    constexpr Count nx = 8;
+    constexpr Count ny = 2;
+    constexpr Count nz = 2;
+    constexpr Count expectedTotal = nx * ny * nz;
 
-    if (ownedTotal != totalCellCount)
-    {
-        FatalError
-        (
-            "Decomposition check: owned cells sum to "
-          + std::to_string(ownedTotal) + ", complete mesh has "
-          + std::to_string(totalCellCount)
-        );
-    }
+    const DecomposedBoxMesh box(nx, ny, nz);
+    const Mesh& mesh = box.mesh();
+
+    const Count domainSum = globalSum(mesh.numDomainCells());
+    REQUIRE(domainSum == expectedTotal);
+    REQUIRE(mesh.numDomainCells() > 0);
 }
 
+// **************************** Ghost Cell Geometry ***************************
 
-/// Ghost centroids/volumes must BIT-match the owning rank's cells
-void checkGhostGeometry(const Mesh& mesh)
+TEST_CASE
+(
+    "Ghost cell geometry bit-matches the remote owner rank",
+    "[mpi][parallel]"
+)
 {
+    if (!Comm::parallelRun())
+    {
+        SKIP("Decomposition cut checks require at least 2 ranks");
+    }
+
+    const DecomposedBoxMesh box(8, 2, 2);
+    const Mesh& mesh = box.mesh();
     const CellList& cells = mesh.cells();
 
-    for (const ProcessorPatch& patch : mesh.processorPatches())
+    for (const ProcessorPatch& patch : Halo::processorPatches())
     {
-        // The neighbor's sends arrive in exactly my ghost order
         std::vector<Scalar> sendBuffer;
         sendBuffer.reserve(4 * patch.sendCellIndices().size());
 
@@ -131,27 +137,29 @@ void checkGhostGeometry(const Mesh& mesh)
              && received[4 * i + 2] == ghost.centroid().z()
              && received[4 * i + 3] == ghost.volume();
 
-            if (!match)
-            {
-                FatalError
-                (
-                    "Decomposition check: ghost cell "
-                  + std::to_string(patch.ghostFirstCell() + i)
-                  + " does not bit-match its owner on rank "
-                  + std::to_string(patch.neighborRank())
-                );
-            }
+            REQUIRE(match);
         }
     }
 }
 
+// ***************************** Cut Face Geometry ****************************
 
-/// Both copies of every cut face must BIT-match in geometry
-void checkCutFaceGeometry(const Mesh& mesh)
+TEST_CASE
+(
+    "Cut face geometry bit-matches across partition cuts",
+    "[mpi][parallel]"
+)
 {
+    if (!Comm::parallelRun())
+    {
+        SKIP("Decomposition cut checks require at least 2 ranks");
+    }
+
+    const DecomposedBoxMesh box(8, 2, 2);
+    const Mesh& mesh = box.mesh();
     const FaceList& faces = mesh.faces();
 
-    for (const ProcessorPatch& patch : mesh.processorPatches())
+    for (const ProcessorPatch& patch : Halo::processorPatches())
     {
         std::vector<Scalar> sendBuffer;
         sendBuffer.reserve(7 * patch.numFaces());
@@ -164,46 +172,68 @@ void checkCutFaceGeometry(const Mesh& mesh)
         )
         {
             const Face& face = faces[faceIdx];
-            sendBuffer.push_back(face.centroid().x());
-            sendBuffer.push_back(face.centroid().y());
-            sendBuffer.push_back(face.centroid().z());
-            sendBuffer.push_back(face.normal().x());
-            sendBuffer.push_back(face.normal().y());
-            sendBuffer.push_back(face.normal().z());
-            sendBuffer.push_back(face.projectedArea());
+            const Vector& centroid = face.centroid();
+            const Vector& normal = face.normal();
+
+            sendBuffer.push_back(centroid.x());
+            sendBuffer.push_back(centroid.y());
+            sendBuffer.push_back(centroid.z());
+            sendBuffer.push_back(normal.x());
+            sendBuffer.push_back(normal.y());
+            sendBuffer.push_back(normal.z());
+            sendBuffer.push_back(face.contactArea());
         }
 
         const std::vector<Scalar> received =
-            exchangeWithNeighbor(patch, sendBuffer, sendBuffer.size());
+            exchangeWithNeighbor
+            (
+                patch,
+                sendBuffer,
+                7 * patch.numFaces()
+            );
 
-        for (Index i = 0; i < sendBuffer.size(); ++i)
+        for (Index i = 0; i < patch.numFaces(); ++i)
         {
-            if (received[i] != sendBuffer[i])
-            {
-                FatalError
-                (
-                    "Decomposition check: cut face geometry differs from "
-                    "rank " + std::to_string(patch.neighborRank())
-                  + " (both sides recompute from identical node data, so "
-                    "any difference is an extraction bug)"
-                );
-            }
+            const Face& face = faces[patch.firstFaceIdx() + i];
+
+            const bool match =
+                received[7 * i]     == face.centroid().x()
+             && received[7 * i + 1] == face.centroid().y()
+             && received[7 * i + 2] == face.centroid().z()
+             && received[7 * i + 3] == face.normal().x()
+             && received[7 * i + 4] == face.normal().y()
+             && received[7 * i + 5] == face.normal().z()
+             && received[7 * i + 6] == face.contactArea();
+
+            REQUIRE(match);
         }
     }
 }
 
+// *************************** Gradient Across Cuts ***************************
 
-/// Least-squares gradient of a linear field, exact across the cuts
-void checkGradientAcrossCuts(const Mesh& mesh)
+TEST_CASE
+(
+    "Least-squares gradient across partition cuts reproduces linear fields",
+    "[mpi][parallel]"
+)
 {
-    // phi = a x + b y + c z + d at every centroid, ghosts included
+    if (!Comm::parallelRun())
+    {
+        SKIP("Decomposition cut checks require at least 2 ranks");
+    }
+
+    // 8x4x4 ensures interior cells adjacent to partition cuts do not touch
+    // physical boundaries (where an empty BoundaryConditions would fail)
+    const DecomposedBoxMesh box(8, 4, 4);
+    const Mesh& mesh = box.mesh();
+
     const Scalar a = S(1.5);
     const Scalar b = S(2.5);
     const Scalar c = S(-3.5);
     const Scalar d = S(4.2);
 
-    ScalarField phi;
-
+    ScalarField phi(mesh);
     const CellList& cells = mesh.cells();
     const Count numCells = mesh.numCells();
 
@@ -213,18 +243,16 @@ void checkGradientAcrossCuts(const Mesh& mesh)
         phi[cellIdx] = a * x.x() + b * x.y() + c * x.z() + d;
     }
 
-    // Cells touching a physical boundary are skipped
     const BoundaryConditions bc;
     const LeastSquares leastSquares(mesh, bc);
 
-    // Owned cells adjacent to a cut, away from physical boundaries
-    std::vector<bool> tested(mesh.numOwnedCells(), false);
+    std::vector<bool> tested(mesh.numDomainCells(), false);
     const FaceList& faces = mesh.faces();
 
     Scalar maxError = S(0.0);
     Count testedCells = 0;
 
-    for (const ProcessorPatch& patch : mesh.processorPatches())
+    for (const ProcessorPatch& patch : Halo::processorPatches())
     {
         for
         (
@@ -237,7 +265,7 @@ void checkGradientAcrossCuts(const Mesh& mesh)
             const Index neighborIdx = face.neighborCell().value();
 
             const Index ownedSide =
-                face.ownerCell() < mesh.numOwnedCells()
+                face.ownerCell() < mesh.numDomainCells()
               ? face.ownerCell()
               : neighborIdx;
 
@@ -249,7 +277,6 @@ void checkGradientAcrossCuts(const Mesh& mesh)
             tested[ownedSide] = true;
 
             bool touchesBoundary = false;
-
             for (const Index cellFaceIdx : cells[ownedSide].faceIndices())
             {
                 if (faces[cellFaceIdx].isBoundary())
@@ -289,57 +316,7 @@ void checkGradientAcrossCuts(const Mesh& mesh)
     const Scalar globalError = globalMax(maxError);
     const Count globalTested = globalSum(testedCells);
 
-    const Scalar tolerance = std::sqrt(smallValue);
-
-    if (globalError > tolerance)
-    {
-        FatalError
-        (
-            "Decomposition check: least-squares gradient across the cuts "
-            "reached error " + std::to_string(globalError)
-        );
-    }
-
-    if (Comm::master())
-    {
-        Logger::keyValue("Gradient test cells", globalTested);
-        Logger::keyValue("Gradient max error", globalError);
-    }
-}
-
-} // namespace
-
-// ********************** namespace DecompositionChecker **********************
-
-void DecompositionChecker::check
-(
-    const Mesh& mesh,
-    Count totalCellCount
-)
-{
-    checkCellAccounting(mesh, totalCellCount);
-    checkGhostGeometry(mesh);
-    checkCutFaceGeometry(mesh);
-
-    Count numCutFaces = 0;
-
-    for (const ProcessorPatch& patch : mesh.processorPatches())
-    {
-        numCutFaces += patch.numFaces();
-    }
-
-    const Count globalGhosts = globalSum(mesh.numGhostCells());
-    const Count globalCuts = globalSum(numCutFaces);
-
-    if (Comm::master())
-    {
-        Logger::subsection("Decomposition checks");
-        Logger::keyValue("Total owned cells", totalCellCount);
-        Logger::keyValue("Ghost cells (all ranks)", globalGhosts);
-        Logger::keyValue("Cut faces (both sides)", globalCuts);
-        Logger::keyValue("Ghost geometry", "bit-identical");
-        Logger::keyValue("Cut-face geometry", "bit-identical");
-    }
-
-    checkGradientAcrossCuts(mesh);
+    REQUIRE(globalTested > 0);
+    REQUIRE(globalError <= std::sqrt(smallValue));
+    REQUIRE(globalError <= TestTolerances::absOperator);
 }

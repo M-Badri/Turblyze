@@ -19,6 +19,7 @@
 #include <cmath>
 
 // Project headers
+#include "Mesh.h"
 #include "Tensor.h"
 
 // ******************************* namespace VTK ******************************
@@ -28,13 +29,14 @@ namespace VTK
 
 ScalarField velocityMagnitude
 (
+    const Mesh& mesh,
     const ScalarField& Ux,
     const ScalarField& Uy,
     const ScalarField& Uz
 )
 {
-    ScalarField result;
-    for (Index cellIdx = 0; cellIdx < Ux.size(); ++cellIdx)
+    ScalarField result(mesh);
+    for (Index cellIdx = 0; cellIdx < mesh.numCells(); ++cellIdx)
     {
         result[cellIdx] = std::sqrt
         (
@@ -46,10 +48,10 @@ ScalarField velocityMagnitude
     return result;
 }
 
-ScalarField vorticityMagnitude(const VectorField& vorticity)
+ScalarField vorticityMagnitude(const Mesh& mesh, const VectorField& vorticity)
 {
-    ScalarField result;
-    for (Index cellIdx = 0; cellIdx < vorticity.size(); ++cellIdx)
+    ScalarField result(mesh);
+    for (Index cellIdx = 0; cellIdx < mesh.numCells(); ++cellIdx)
     {
         result[cellIdx] = magnitude(vorticity[cellIdx]);
     }
@@ -58,14 +60,15 @@ ScalarField vorticityMagnitude(const VectorField& vorticity)
 
 ScalarField QCriterion
 (
+    const Mesh& mesh,
     const VectorField& gradUx,
     const VectorField& gradUy,
     const VectorField& gradUz
 )
 {
-    ScalarField qCriterion;
+    ScalarField qCriterion(mesh);
 
-    for (Index cellIdx = 0; cellIdx < gradUx.size(); ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < mesh.numCells(); ++cellIdx)
     {
         // Q = 0.5 * (||Omega||^2 - ||S||^2)
         const Tensor gradU =
@@ -82,14 +85,15 @@ ScalarField QCriterion
 
 ScalarField strainRateMagnitude
 (
+    const Mesh& mesh,
     const VectorField& gradUx,
     const VectorField& gradUy,
     const VectorField& gradUz
 )
 {
-    ScalarField strainRateMag;
+    ScalarField strainRateMag(mesh);
 
-    for (Index cellIdx = 0; cellIdx < gradUx.size(); ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < mesh.numCells(); ++cellIdx)
     {
         // Strain rate magnitude = sqrt(2 * S_ij * S_ij)
         const Tensor gradU = tensorFromRows

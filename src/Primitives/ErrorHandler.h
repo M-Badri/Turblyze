@@ -15,15 +15,12 @@
 // ********************************** Headers *********************************
 
 // Standard library headers
-#include <cstdlib>
 #include <iostream>
 #include <source_location>
 
-// External library headers
-#include <mpi.h>
-
 // Project headers
 #include "StringTypes.h"
+#include "Comm.h"
 
 // *********************************** Alias **********************************
 
@@ -44,18 +41,7 @@ using Location = std::source_location;
         << errorLocation.line()
         << '\n' << "    " << errorMessage << '\n' << '\n' << std::endl;
 
-    // Abort parallel run by aborting all ranks
-    int MPIInitialized = 0;
-    int MPIFinalized = 0;
-    MPI_Initialized(&MPIInitialized);
-    MPI_Finalized(&MPIFinalized);
-
-    if (MPIInitialized != 0 && MPIFinalized == 0)
-    {
-        MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-
-    std::abort();
+    Comm::abort(1);
 }
 
 

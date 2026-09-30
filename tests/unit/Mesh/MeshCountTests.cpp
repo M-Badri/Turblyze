@@ -21,48 +21,44 @@
 #include "CellData.h"
 #include "Vector.h"
 
-// ****************************** Static Counts *******************************
+// ****************************** Mesh Counts *********************************
 
-TEST_CASE("Static counts follow the constructed mesh", "[mesh]")
+TEST_CASE("Mesh counts report correct dimensions", "[mesh]")
 {
     const TestMesh box(2, 2, 2);
 
     // 2x2x2 = 8 cells; 12 internal + 24 boundary faces = 36
-    REQUIRE(Mesh::cellCount() == 8);
-    REQUIRE(Mesh::faceCount() == 36);
-    REQUIRE(box.mesh().numOwnedCells() == box.mesh().numCells());
-    REQUIRE(box.mesh().numGhostCells() == 0);
+    REQUIRE(box.mesh().numCells() == 8);
+    REQUIRE(box.mesh().numFaces() == 36);
+    REQUIRE(box.mesh().numDomainCells() == box.mesh().numCells());
+    REQUIRE(box.mesh().numHaloCells() == 0);
+    REQUIRE(!box.mesh().isDecomposed());
 }
 
-// ***************************** Count Slot Reuse *****************************
+// ************************ Multiple Coexisting Meshes ************************
 
-TEST_CASE("resetCounts releases the slot for the next mesh", "[mesh]")
+TEST_CASE("Multiple meshes coexist simultaneously", "[mesh]")
 {
-    // The first mesh claims the single global count slot; its destructor
-    // calls Mesh::resetCounts() on scope exit. Only one mesh may be alive at
-    // a time.
-    {
-        const TestMesh box(2, 2, 2);
-        REQUIRE(Mesh::cellCount() == 8);
-    }
-
-    // The slot is free again: a differently sized mesh reclaims it
+    const TestMesh box1(2, 2, 2);
     const TestMesh box2(3, 1, 1);
-    REQUIRE(Mesh::cellCount() == 3);
+
+    REQUIRE(box1.mesh().numCells() == 8);
+    REQUIRE(box1.mesh().numFaces() == 36);
+
+    REQUIRE(box2.mesh().numCells() == 3);
+    REQUIRE(box2.mesh().numFaces() == 16);
 }
 
 // ******************************* Field Sizing *******************************
 
-TEST_CASE("Field containers size from the counts", "[mesh]")
+TEST_CASE("Field containers size from the mesh", "[mesh]")
 {
     const TestMesh box(2, 1, 1);
 
-    // Fields size themselves from Mesh::cellCount(), fixed at construction
-    // of the mesh above, so they must be built after the TestMesh exists.
-    const ScalarField s;
+    const ScalarField s(box.mesh());
     REQUIRE(s.size() == box.mesh().numCells());
 
-    const VectorField v(Vector(S(1.0), S(0.0), S(0.0)));
+    const VectorField v(box.mesh(), Vector(S(1.0), S(0.0), S(0.0)));
     REQUIRE(v.size() == box.mesh().numCells());
     REQUIRE(v[0] == Vector(S(1.0), S(0.0), S(0.0)));
 }

@@ -53,7 +53,7 @@ TEST_CASE("Least-squares gradient of a linear field is exact", "[schemes]")
     const BoundaryConditions bc;
     const LeastSquares leastSquares(box.mesh(), bc);
 
-    ScalarField phi;
+    ScalarField phi(box.mesh());
 
     for (Index cellIdx = 0; cellIdx < box.mesh().numCells(); ++cellIdx)
     {
@@ -88,7 +88,7 @@ TEST_CASE("Least-squares gradient of a constant field is zero", "[schemes]")
     const BoundaryConditions bc;
     const LeastSquares leastSquares(box.mesh(), bc);
 
-    ScalarField phi(S(4.2));
+    ScalarField phi(box.mesh(), S(4.2));
 
     const Vector gradient =
         leastSquares.cellGradient(Field::p, phi, centreCell);

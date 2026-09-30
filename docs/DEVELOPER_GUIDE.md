@@ -59,8 +59,7 @@ following the OpenFOAM convention.
     `MPIScalarType.h`
   - `MeshDecomposer.h/.cpp` (METIS partitioning into per-rank submeshes),
     `MeshDistributor.h/.cpp` (ships each rank its block), `SubmeshData.h`,
-    `DecompositionChecker.h/.cpp` (collective validation of the result)
-  - `ProcessorPatch.h` (metadata of one inter-rank cut),
+    `ProcessorPatch.h` (metadata of one inter-rank cut),
     `HaloExchange.h` (header-only ghost-cell update),
     `GlobalIndex.h/.cpp` (local-to-global cell numbering for PETSc)
 - **`src/Solver/`**: segregated pressure–velocity algorithms (a three-level

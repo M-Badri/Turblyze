@@ -78,9 +78,9 @@ private:
     Count nPrimeCorrectors_;
 
     /// Scratch read buffers for the explicit Jacobi velocity sweep
-    ScalarField UxStar_;
-    ScalarField UyStar_;
-    ScalarField UzStar_;
+    ScalarField UxStar_{mesh_};
+    ScalarField UyStar_{mesh_};
+    ScalarField UzStar_{mesh_};
 
 // ****************************** Private Methods *****************************
 

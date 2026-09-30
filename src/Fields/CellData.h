@@ -43,16 +43,10 @@ public:
 
 // ************************* Special Member Functions *************************
 
-    /// Construct zero-initialized field
-    CellData()
+    /// Construct field sized to mesh with optional initial value
+    explicit CellData(const Mesh& mesh, const T& initialValue = T{})
     :
-        internalField_(Mesh::cellCount(), T{})
-    {}
-
-    /// Construct field with initial value
-    explicit CellData(const T& initialValue)
-    :
-        internalField_(Mesh::cellCount(), initialValue)
+        internalField_(mesh.numCells(), initialValue)
     {}
 
 // ****************************** Setter Methods ******************************

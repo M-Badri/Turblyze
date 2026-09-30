@@ -57,8 +57,7 @@ TEST_CASE("Constant field interpolates to itself", "[schemes]")
 {
     const TestMesh box(2, 1, 1);
 
-    // ScalarField sizes itself from Mesh::cellCount(); build it after the mesh
-    ScalarField phi;
+    ScalarField phi(box.mesh());
     phi[0] = S(7.5);
     phi[1] = S(7.5);
 
@@ -78,7 +77,7 @@ TEST_CASE("Equal distances give the midpoint", "[schemes]")
     const TestMesh box(2, 1, 1);
 
     // Uniform spacing makes dPf == dNf, so the face value is the midpoint
-    ScalarField phi;
+    ScalarField phi(box.mesh());
     phi[0] = S(1.0);
     phi[1] = S(3.0);
 
@@ -99,7 +98,7 @@ TEST_CASE("Linear field is exact at the face", "[schemes]")
 
     // phi(x) = x sampled at the cell centroids (0.5 and 1.5); the internal
     // face sits at x = 1, so the interpolated value must be exactly 1.0
-    ScalarField phi;
+    ScalarField phi(box.mesh());
 
     const CellList& cells = box.mesh().cells();
     for (Index cellIdx = 0; cellIdx < cells.size(); ++cellIdx)

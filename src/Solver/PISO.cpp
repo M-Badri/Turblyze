@@ -95,7 +95,7 @@ bool PISO::outerIteration
     {
         // Update Pressure gradient
         gradientScheme().fieldGradient(Field::p, pressure(), gradP());
-        exchangeHalos(mesh(), {&gradP()});
+        Halo::exchange({&gradP()});
 
         // Explicit momentum predictor
         solveMomentumExplicit(prevStep);
@@ -203,7 +203,7 @@ void PISO::solveMomentumExplicit(const TransientFields* prevStep)
     std::swap(Uz(), UzStar_);
 
     // The sweeps wrote owned cells only: refresh U ghosts before reading
-    exchangeHalos(mesh(), {&Ux(), &Uy(), &Uz()});
+    Halo::exchange({&Ux(), &Uy(), &Uz()});
 
     // Rebuild the face momentum diagonal
     buildFaceDiagonal();

@@ -7,11 +7,13 @@
 
  ------------------------------------------------------------------------------
  * @file HaloExchange.h
- * @brief Update ghost cells from their owning ranks
+ * @brief Ambient parallel halo exchange and cut topology management
  *
- * @details One exchangeHalos call sends one packed non-blocking message
- * per neighbor rank and fills the ghost tail with the received values.
- * Call it after writing owned cells that neighbors read across a cut.
+ * @details Encapsulates the processor patches (cuts with neighboring ranks)
+ * and ghost global indices as an ambient runtime service. Performs
+ * non-blocking MPI halo exchanges of cell-centered fields across partition
+ * boundaries. In serial runs, all exchange operations are immediate no-ops.
+ * Zero MPI headers are exposed to callers.
  *****************************************************************************/
 
 #pragma once
@@ -19,113 +21,50 @@
 // ********************************** Headers *********************************
 
 // Standard library headers
-#include <cstring>
 #include <initializer_list>
-#include <vector>
-
-// External library headers
-#include <mpi.h>
 
 // Project headers
+#include "Integer.h"
 #include "CellData.h"
-#include "Mesh.h"
+#include "ProcessorPatch.h"
 
-// ***************************** Halo Exchange ********************************
+// ******************************* namespace Halo *****************************
 
-template<typename T>
-void exchangeHalos
-(
-    const Mesh& mesh,
-    std::initializer_list<CellData<T>*> fields
-)
+namespace Halo
 {
-    constexpr int haloTag = 50;
+    /// Set the partition's cut metadata and ghost global indices
+    void init(ProcessorPatchList patches, IndexList ghostGlobalIndices = {});
 
-    const ProcessorPatchList& patches = mesh.processorPatches();
+    /// Reset the partition metadata (e.g. at end of run or test teardown)
+    void reset() noexcept;
 
-    if (patches.empty())
-    {
-        return;
-    }
+    /// Whether this rank has no neighbor cuts (e.g. serial run)
+    [[nodiscard]] bool empty() noexcept;
 
-    const Count numFields = fields.size();
-    const Count numPatches = patches.size();
+    /// Number of processor patches (neighbor cuts)
+    [[nodiscard]] Count numPatches() noexcept;
 
-    std::vector<std::vector<T>> sendBuffers(numPatches);
-    std::vector<std::vector<T>> recvBuffers(numPatches);
-    std::vector<MPI_Request> requests;
-    requests.reserve(2 * numPatches);
+    /// Processor patch cuts
+    [[nodiscard]] const ProcessorPatchList& processorPatches() noexcept;
 
-    // Receives first, message layout is [field0 cells | field1 cells | ...]
-    for (Index p = 0; p < numPatches; ++p)
-    {
-        recvBuffers[p].resize(numFields * patches[p].ghostCellCount());
+    /// Global cell index of each ghost cell (for PETSc matrix assembly)
+    [[nodiscard]] const IndexList& ghostGlobalIndices() noexcept;
 
-        MPI_Request request = MPI_REQUEST_NULL;
-        MPI_Irecv
-        (
-            recvBuffers[p].data(),
-            static_cast<int>(recvBuffers[p].size() * sizeof(T)),
-            MPI_BYTE,
-            static_cast<int>(patches[p].neighborRank()),
-            haloTag,
-            MPI_COMM_WORLD,
-            &request
-        );
-        requests.push_back(request);
-    }
+    /// Exchange halo values across all processor patches (no-op if empty)
+    void exchange(std::initializer_list<ScalarField*> fields);
+    void exchange(std::initializer_list<VectorField*> fields);
+    void exchange(std::initializer_list<TensorField*> fields);
 
-    for (Index p = 0; p < numPatches; ++p)
-    {
-        const IndexList& sendCells = patches[p].sendCellIndices();
+    /// Convenience single-field overloads
+    inline void exchange(ScalarField& field) { exchange({&field}); }
+    inline void exchange(VectorField& field) { exchange({&field}); }
+    inline void exchange(TensorField& field) { exchange({&field}); }
 
-        sendBuffers[p].reserve(numFields * sendCells.size());
+} // namespace Halo
 
-        for (const CellData<T>* field : fields)
-        {
-            for (const Index cellIdx : sendCells)
-            {
-                sendBuffers[p].push_back((*field)[cellIdx]);
-            }
-        }
-
-        MPI_Request request = MPI_REQUEST_NULL;
-        MPI_Isend
-        (
-            sendBuffers[p].data(),
-            static_cast<int>(sendBuffers[p].size() * sizeof(T)),
-            MPI_BYTE,
-            static_cast<int>(patches[p].neighborRank()),
-            haloTag,
-            MPI_COMM_WORLD,
-            &request
-        );
-        requests.push_back(request);
-    }
-
-    MPI_Waitall
-    (
-        static_cast<int>(requests.size()),
-        requests.data(),
-        MPI_STATUSES_IGNORE
-    );
-
-    // Ghost cells of one patch are contiguous per field: one copy each
-    for (Index p = 0; p < numPatches; ++p)
-    {
-        const Count ghostCount = patches[p].ghostCellCount();
-        const Index ghostFirst = patches[p].ghostFirstCell();
-
-        Index f = 0;
-        for (CellData<T>* field : fields)
-        {
-            std::memcpy
-            (
-                field->data() + ghostFirst,
-                recvBuffers[p].data() + f * ghostCount,
-                ghostCount * sizeof(T)
-            );
-            ++f;
-        }
-    }
+// Backward-compatible free-function alias
+template<typename T>
+inline void exchangeHalos(std::initializer_list<CellData<T>*> fields)
+{
+    Halo::exchange(fields);
 }

@@ -142,7 +142,7 @@ void runTransient
         );
     }
 
-    TransientFields prevStep;
+    TransientFields prevStep(mesh);
 
     for (Count step = 1; step <= numSteps; ++step)
     {
@@ -214,7 +214,7 @@ void run(const FilePath& caseFile)
     CaseReader caseReader(caseFile);
     const CaseConfiguration config = CaseConfig::loadConfiguration(caseReader);
 
-    // Create mesh (decomposed across ranks in a parallel run)
+    // Create mesh (decomposed across ranks in parallel)
     Mesh mesh = MeshCreator::create(config);
 
     // Load boundary conditions

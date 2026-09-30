@@ -391,14 +391,18 @@ protected:
         const ScalarField& previousField
     ) const;
 
-// ****************************** Private Members *****************************
+// ***************************** Protected Members ****************************
 
-private:
+protected:
 
 // Dependencies and services
 
     /// Mesh view (nodes, faces, cells)
     const Mesh& mesh_;
+
+// ****************************** Private Members *****************************
+
+private:
 
     /// Reference to BCs
     const BoundaryConditions& bcManager_;
@@ -444,28 +448,28 @@ private:
 // Common transport state
 
     /// Turbulent kinematic viscosity
-    ScalarField nut_{S(0.0)};
+    ScalarField nut_{mesh_, S(0.0)};
 
     /// Turbulent kinetic energy
-    ScalarField k_{S(1e-6)};
+    ScalarField k_{mesh_, S(1e-6)};
 
     /// Previous-iteration k snapshot for residual computation
-    ScalarField kPrev_;
+    ScalarField kPrev_{mesh_};
 
     /// k from the previous time step (phi^n) for the transient term
-    ScalarField kPrevStep_;
+    ScalarField kPrevStep_{mesh_};
 
     /// Dissipation from the previous time step (phi^n)
-    ScalarField dissipationPrevStep_;
+    ScalarField dissipationPrevStep_{mesh_};
 
     /// Stored old time derivative of k for Crank-Nicolson
-    ScalarField kDdtPrevStep_;
+    ScalarField kDdtPrevStep_{mesh_};
 
     /// Stored old time derivative of dissipation for Crank-Nicolson
-    ScalarField dissipationDdtPrevStep_;
+    ScalarField dissipationDdtPrevStep_{mesh_};
 
     /// Cell gradient of k
-    VectorField gradK_;
+    VectorField gradK_{mesh_};
 
     /// Normalised k change from the most recent solve
     Scalar lastKResidual_ = S(1e9);
@@ -476,25 +480,25 @@ private:
 // Wall distance and wall-function state
 
     /// Distance to nearest wall
-    ScalarField wallDistance_{S(1.0)};
+    ScalarField wallDistance_{mesh_, S(1.0)};
 
     /// Coordinates of the nearest wall point per cell (for mesh-wave)
-    VectorField nearestWallPoint_;
+    VectorField nearestWallPoint_{mesh_};
 
     /// meshWave wall-distance loop convergence flag
     bool wallDistanceConverged_ = false;
 
     /// Owner-cell to wall-face perpendicular distance
-    FaceData<Scalar> y_;
+    FaceData<Scalar> y_{mesh_};
 
     /// y+
-    FaceData<Scalar> yPlus_;
+    FaceData<Scalar> yPlus_{mesh_};
 
     /// Wall-function nut values on wall faces
-    FaceData<Scalar> nutWall_;
+    FaceData<Scalar> nutWall_{mesh_};
 
     /// Area-based weight per wall face (face area / total wall area of cell)
-    FaceData<Scalar> wallFaceWeight_;
+    FaceData<Scalar> wallFaceWeight_{mesh_};
 
     /// Indices into mesh_.faces for faces with model wall-function BCs
     IndexList wallFunctionFaceIndices_;

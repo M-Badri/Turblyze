@@ -133,8 +133,8 @@ void HDF5CellData::writeGeometry()
     const CellList& allCells = mesh_.cells();
     const FaceList& allFaces = mesh_.faces();
 
-    // Owned cells only: the neighbor ranks write their own
-    const Count numOwnedCells = mesh_.numOwnedCells();
+    // Domain cells only: the neighbor ranks write their own
+    const Count numDomainCells = mesh_.numDomainCells();
 
     // Point coordinates, written once as double precision
     std::vector<double> points;
@@ -152,7 +152,7 @@ void HDF5CellData::writeGeometry()
     std::vector<long long> offsets;
     const std::vector<unsigned char> types
     (
-        numOwnedCells,
+        numDomainCells,
         polyhedronCellType
     );
     std::vector<long long> faceConnectivity;
@@ -160,8 +160,8 @@ void HDF5CellData::writeGeometry()
     std::vector<long long> polyhedronToFaces;
     std::vector<long long> polyhedronOffsets;
 
-    offsets.reserve(numOwnedCells + 1);
-    polyhedronOffsets.reserve(numOwnedCells + 1);
+    offsets.reserve(numDomainCells + 1);
+    polyhedronOffsets.reserve(numDomainCells + 1);
     offsets.push_back(0);
     faceOffsets.push_back(0);
     polyhedronOffsets.push_back(0);
@@ -169,7 +169,7 @@ void HDF5CellData::writeGeometry()
     std::vector<long long> uniquePointIds;
     std::vector<long long> orientedFaceNodes;
 
-    for (Index cellIdx = 0; cellIdx < numOwnedCells; ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < numDomainCells; ++cellIdx)
     {
         const Cell& cell = allCells[cellIdx];
         const auto& faceIndices = cell.faceIndices();
@@ -262,7 +262,7 @@ void HDF5CellData::writeGeometry()
     // Only the placement is global, the values stay piece-local
     const HDF5::SlabLayout pointRows =
         HDF5::distributedRows(allNodes.size());
-    const HDF5::SlabLayout cellRows = HDF5::distributedRows(numOwnedCells);
+    const HDF5::SlabLayout cellRows = HDF5::distributedRows(numDomainCells);
     const HDF5::SlabLayout connectivityRows =
         HDF5::distributedRows(connectivity.size());
     const HDF5::SlabLayout faceRows =
@@ -274,7 +274,7 @@ void HDF5CellData::writeGeometry()
     const HDF5::SlabLayout partRow = HDF5::oneRowPerRank();
 
     const long long numPoints = static_cast<long long>(allNodes.size());
-    const long long numCells = static_cast<long long>(numOwnedCells);
+    const long long numCells = static_cast<long long>(numDomainCells);
     const long long numConnectivityIds =
         static_cast<long long>(connectivity.size());
     const long long numFaces =
@@ -425,7 +425,7 @@ void HDF5CellData::writeGeometry()
         0
     );
 
-    numCells_ = numOwnedCells;
+    numCells_ = numDomainCells;
     numNodes_ = allNodes.size();
     globalNumCells_ = static_cast<Count>(cellRows.globalRows);
     cellRowOffset_ = static_cast<Index>(cellRows.rowOffset);

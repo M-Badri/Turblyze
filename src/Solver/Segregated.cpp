@@ -152,7 +152,7 @@ Scalar Segregated::pressureResidual() const noexcept
     // Normalize p' RMS by RMS(p)
     Scalar sumP2 = S(0.0);
 
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -160,7 +160,7 @@ Scalar Segregated::pressureResidual() const noexcept
     }
 
     const Scalar pRms =
-        std::sqrt(globalSum(sumP2) / S(totalOwnedCells()));
+        std::sqrt(globalSum(sumP2) / S(totalDomainCells()));
 
     return lastPressureCorrectionRMS_ / (pRms + vSmallValue);
 }
@@ -202,7 +202,7 @@ void Segregated::updateEffectiveViscosity()
 
 void Segregated::assembleMomentum()
 {
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
 
     // Reset diagonals accumulator
     DU_.setAll(S(0.0));
@@ -236,7 +236,7 @@ void Segregated::solveMomentum(const TransientFields* prevStep)
 
     // Seed the pressure gradient for the momentum source and Rhie-Chow
     gradientScheme().fieldGradient(Field::p, pressure(), gradP_);
-    exchangeHalos(mesh(), {&gradP_});
+    Halo::exchange({&gradP_});
 
     updateEffectiveViscosity();
     assembleMomentum();
@@ -314,7 +314,7 @@ void Segregated::solveMomentum(const TransientFields* prevStep)
 
         momentumSolver_.solve
         (
-            {equations[momentumComponent].phi.data(), mesh().numOwnedCells()},
+            {equations[momentumComponent].phi.data(), mesh().numDomainCells()},
             matrixConstruct_.matrixA(),
             matrixConstruct_.rhsVec()
         );
@@ -335,7 +335,7 @@ void Segregated::solveMomentum(const TransientFields* prevStep)
     }
 
     // KSP writes owned entries only: refresh U ghosts before any face read
-    exchangeHalos(mesh(), {&Ux(), &Uy(), &Uz()});
+    Halo::exchange({&Ux(), &Uy(), &Uz()});
 
     buildFaceDiagonal();
 }
@@ -344,7 +344,7 @@ void Segregated::solveMomentum(const TransientFields* prevStep)
 void Segregated::diagonalDU(Index component)
 {
     const std::span<const Scalar> diagonal = matrixConstruct_.diagonal();
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -361,7 +361,7 @@ void Segregated::diagonalDU(Index component)
         }
 
         // Rhie-Chow and the p' diffusion interpolate DU at cut faces
-        exchangeHalos(mesh(), {&DU_});
+        Halo::exchange({&DU_});
     }
 }
 
@@ -496,7 +496,7 @@ void Segregated::updateRhieChowFlowRate(const TransientFields* prevStep)
 
 void Segregated::solvePressureCorrection()
 {
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
 
     // Compute mass imbalance source term
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
@@ -583,7 +583,7 @@ void Segregated::solvePressureCorrection()
         }
 
         // The corrector reads p' and grad p' at both cells of every cut
-        exchangeHalos(mesh(), {&pCorr_});
+        Halo::exchange({&pCorr_});
 
         // grad(p') feeds the next corrector's non-orthogonal term
         for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
@@ -592,7 +592,7 @@ void Segregated::solvePressureCorrection()
                 gradientScheme().cellGradient(Field::pCorr, pCorr_, cellIdx);
         }
 
-        exchangeHalos(mesh(), {&gradPCorr_});
+        Halo::exchange({&gradPCorr_});
     }
 
     if (pCorrNeedsNullSpace_)
@@ -604,7 +604,7 @@ void Segregated::solvePressureCorrection()
 
 void Segregated::correctVelocity()
 {
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -614,7 +614,7 @@ void Segregated::correctVelocity()
     }
 
     // The face averages below read the corrected U at both cells
-    exchangeHalos(mesh(), {&Ux(), &Uy(), &Uz()});
+    Halo::exchange({&Ux(), &Uy(), &Uz()});
 
     // Update face velocities
     const Count numFaces = mesh().numFaces();
@@ -699,7 +699,7 @@ void Segregated::correctPressure()
 {
     Scalar sumSq = S(0.0);
 
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -707,7 +707,7 @@ void Segregated::correctPressure()
     }
 
     lastPressureCorrectionRMS_ =
-        std::sqrt(globalSum(sumSq) / S(totalOwnedCells()));
+        std::sqrt(globalSum(sumSq) / S(totalDomainCells()));
 
     // Apply pressure correction
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
@@ -716,13 +716,13 @@ void Segregated::correctPressure()
     }
 
     // Next iteration's gradP stencil and Rhie-Chow read p across cuts
-    exchangeHalos(mesh(), {&pressure()});
+    Halo::exchange({&pressure()});
 }
 
 
 void Segregated::addTransposeGradientSource()
 {
-    const Count numCells = mesh().numOwnedCells();
+    const Count numCells = mesh().numDomainCells();
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {

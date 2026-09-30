@@ -7,12 +7,15 @@
 
  ------------------------------------------------------------------------------
  * @file HaloExchangeTests.cpp
- * @brief Ghost cells receive their owning rank's values across a cut
+ * @brief Unit tests for Halo::exchange non-blocking communication
  *
- * @details Each rank owns one cell of a 1D chain whose global index equals
- * the rank. The owned value convention f(id) = 100 + id lets the exchange be
- * checked analytically. After exchangeHalos, ghost cell p must hold
- * 100 + neighborRank(p).
+ * @details Uses the 1D chain fixture (makeDecomposedChainMesh) so topology is
+ * minimal (one owned cell, one or two ghost stubs) and received values are
+ * checked analytically. After exchange, ghost cell p must hold
+ * the neighbour rank's owned cell value.
+ *
+ * Runs only under mpirun (at least two ranks). Each test verifies that the
+ * receive lands in the correct ghost slot and that nothing is clobbered.
  *****************************************************************************/
 
 // ********************************** Headers *********************************
@@ -22,21 +25,20 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 // Project headers
+#include "Comm.h"
 #include "HaloExchange.h"
 #include "MeshFixtures.h"
-#include "CellData.h"
-#include "Vector.h"
-#include "Comm.h"
+#include "Field.h"
 #include "TestTolerances.h"
 
-using Catch::Matchers::WithinRel;
-
-// ***************************** Internal Helpers *****************************
+// ****************************** Internal Helpers ****************************
 
 namespace
 {
 
-/// Owned-cell value convention: f(globalIdx) = base + globalIdx
+using Catch::Matchers::WithinRel;
+
+/// Known test value: unique per rank, separated across ranks by 1
 [[nodiscard]] Scalar chainValue(Scalar base, Index globalId) noexcept
 {
     return base + S(globalId);
@@ -56,12 +58,12 @@ TEST_CASE("exchangeHalos fills scalar ghosts from the neighbour", "[mpi][paralle
     const DecomposedChainMesh chain;
     const Mesh& mesh = chain.mesh();
 
-    ScalarField phi;
+    ScalarField phi(mesh);
     phi[0] = chainValue(S(100.0), Comm::myProcessorNum());
 
-    exchangeHalos<Scalar>(mesh, {&phi});
+    Halo::exchange({&phi});
 
-    for (const ProcessorPatch& patch : mesh.processorPatches())
+    for (const ProcessorPatch& patch : Halo::processorPatches())
     {
         REQUIRE_THAT
         (
@@ -92,13 +94,13 @@ TEST_CASE
     const DecomposedChainMesh chain;
     const Mesh& mesh = chain.mesh();
 
-    VectorField velocity;
+    VectorField velocity(mesh);
     velocity[0] =
         Vector(chainValue(S(100.0), Comm::myProcessorNum()), S(0.0), S(0.0));
 
-    exchangeHalos<Vector>(mesh, {&velocity});
+    Halo::exchange({&velocity});
 
-    for (const ProcessorPatch& patch : mesh.processorPatches())
+    for (const ProcessorPatch& patch : Halo::processorPatches())
     {
         const Vector& ghost = velocity[patch.ghostFirstCell()];
         REQUIRE_THAT
@@ -129,15 +131,15 @@ TEST_CASE("exchangeHalos fills two batched fields at once", "[mpi][parallel]")
     const Mesh& mesh = chain.mesh();
 
     const Index rank = Comm::myProcessorNum();
-    ScalarField a;
-    ScalarField b;
+    ScalarField a(mesh);
+    ScalarField b(mesh);
     a[0] = chainValue(S(100.0), rank);
     b[0] = chainValue(S(200.0), rank);
 
     // One message per neighbour carries both fields, laid out [a ghosts|b ghosts]
-    exchangeHalos<Scalar>(mesh, {&a, &b});
+    Halo::exchange({&a, &b});
 
-    for (const ProcessorPatch& patch : mesh.processorPatches())
+    for (const ProcessorPatch& patch : Halo::processorPatches())
     {
         REQUIRE_THAT
         (

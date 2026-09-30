@@ -50,7 +50,7 @@ namespace
 {
 
 /// Register the fixed-value / zero-gradient BCs of the 1D diffusion problem
-void registerDiffusionBoundaries(BoundaryConditions& bc, Mesh& mesh)
+void registerDiffusionBoundaries(BoundaryConditions& bc, const Mesh& mesh)
 {
     for (const BoundaryPatch& patch : mesh.patches())
     {
@@ -107,10 +107,10 @@ TEST_CASE("Krylov solvers reproduce the linear profile", "[petsc]")
 
     const LeastSquares gradScheme(box.mesh(), bc);
 
-    ScalarField phi;
-    const FaceFluxField gammaFace(S(1.0));
-    const ScalarField source;
-    const VectorField gradPhi;
+    ScalarField phi(box.mesh());
+    const FaceFluxField gammaFace(box.mesh(), S(1.0));
+    const ScalarField source(box.mesh());
+    const VectorField gradPhi(box.mesh());
 
     const TransportEquation equation
     {
@@ -145,8 +145,8 @@ TEST_CASE("Krylov solvers reproduce the linear profile", "[petsc]")
     for (const auto& [solverName, pcName] : configurations)
     {
         // A fresh zero-initialised solution vector per solver
-        ScalarField solution;
-        std::span<Scalar> x(solution.data(), box.mesh().numOwnedCells());
+        ScalarField solution(box.mesh());
+        std::span<Scalar> x(solution.data(), box.mesh().numDomainCells());
 
         const auto solver = LinearSolver::create
         (
@@ -166,7 +166,7 @@ TEST_CASE("Krylov solvers reproduce the linear profile", "[petsc]")
         for
         (
             Index cellIdx = 0;
-            cellIdx < box.mesh().numOwnedCells();
+            cellIdx < box.mesh().numDomainCells();
             ++cellIdx
         )
         {

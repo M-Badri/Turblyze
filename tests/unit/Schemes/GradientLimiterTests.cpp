@@ -47,7 +47,7 @@ constexpr Index centreCell = 13;
 }
 
 /// Register a zero-gradient pressure BC on every patch of the box
-void registerZeroGradient(BoundaryConditions& bc, Mesh& mesh)
+void registerZeroGradient(BoundaryConditions& bc, const Mesh& mesh)
 {
     for (const BoundaryPatch& patch : mesh.patches())
     {
@@ -92,14 +92,14 @@ TEST_CASE("The limiter leaves a linear-field gradient intact", "[schemes]")
 
     const LeastSquares leastSquares(box.mesh(), bc);
 
-    ScalarField phi;
+    ScalarField phi(box.mesh());
     for (Index cellIdx = 0; cellIdx < box.mesh().numCells(); ++cellIdx)
     {
         phi[cellIdx] = linearField(box.mesh().cells()[cellIdx].centroid());
     }
 
     // fieldGradient computes each cell gradient then limits it in place
-    VectorField gradPhi;
+    VectorField gradPhi(box.mesh());
     leastSquares.fieldGradient(Field::p, phi, gradPhi);
 
     // The interior cell reconstruction never overshoots, so alpha stays 1
@@ -135,13 +135,13 @@ TEST_CASE("The limiter clamps an over-steep gradient to the hull", "[schemes]")
 
     const LeastSquares leastSquares(box.mesh(), bc);
 
-    ScalarField phi;
+    ScalarField phi(box.mesh());
     for (Index cellIdx = 0; cellIdx < box.mesh().numCells(); ++cellIdx)
     {
         phi[cellIdx] = linearField(box.mesh().cells()[cellIdx].centroid());
     }
 
-    VectorField gradPhi;
+    VectorField gradPhi(box.mesh());
     leastSquares.fieldGradient(Field::p, phi, gradPhi);
 
     // Inject a wildly over-steep gradient into the interior cell only

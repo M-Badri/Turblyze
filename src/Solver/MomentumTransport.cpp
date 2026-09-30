@@ -69,7 +69,7 @@ MomentumTransport::MomentumTransport
     p_.setAll(initialPressure);
 
     // Collective: constructed on every rank together
-    totalOwnedCells_ = globalSum(mesh_.numOwnedCells());
+    totalDomainCells_ = globalSum(mesh_.numDomainCells());
 }
 
 // **************************** Runtime Selection *****************************
@@ -290,7 +290,7 @@ bool MomentumTransport::isTransient() const noexcept
 void MomentumTransport::updatePrevStepDerivatives(TransientFields& prevStep)
 {
     // Called only on the transient path
-    const Count numCells = mesh_.numOwnedCells();
+    const Count numCells = mesh_.numDomainCells();
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -334,9 +334,9 @@ void MomentumTransport::updateVelocityGradients()
     // Boundary velocity snapshot must match the velocity the stencils read
     bcManager_.snapshotBoundaryVelocity(Ux_, Uy_, Uz_);
 
-    const Count numOwnedCells = mesh_.numOwnedCells();
+    const Count numDomainCells = mesh_.numDomainCells();
 
-    for (Index cellIdx = 0; cellIdx < numOwnedCells; ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < numDomainCells; ++cellIdx)
     {
         gradUx_[cellIdx] =
             gradientScheme_.cellGradient(Field::Ux, Ux_, cellIdx);
@@ -351,7 +351,7 @@ void MomentumTransport::updateVelocityGradients()
     gradientScheme_.limitGradient(Field::Uz, Uz_, gradUz_);
 
     // Deferred correction reads both cells of every cut face
-    exchangeHalos(mesh_, {&gradUx_, &gradUy_, &gradUz_});
+    Halo::exchange({&gradUx_, &gradUy_, &gradUz_});
 
     // Assembling exchanged components replaces an exchange
     const Count numCells = mesh_.numCells();
@@ -526,7 +526,7 @@ Scalar MomentumTransport::massImbalance() const noexcept
 
     Scalar totalNormImbalance = S(0.0);
 
-    const Count numCells = mesh_.numOwnedCells();
+    const Count numCells = mesh_.numDomainCells();
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -551,7 +551,7 @@ Scalar MomentumTransport::massImbalance() const noexcept
     }
 
     return globalSum(totalNormImbalance)
-         / S(std::max<Count>(1, totalOwnedCells_));
+         / S(std::max<Count>(1, totalDomainCells_));
 }
 
 
@@ -561,7 +561,7 @@ Scalar MomentumTransport::velocityResidual() const noexcept
     Scalar num = S(0.0);
     Scalar den = S(0.0);
 
-    const Count numCells = mesh_.numOwnedCells();
+    const Count numCells = mesh_.numDomainCells();
 
     for (Index cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
@@ -587,7 +587,7 @@ MomentumTransport::computeCourant() const noexcept
 {
     const FaceFluxField& flux = faceMassFlux();
 
-    const Count numCells = mesh_.numOwnedCells();
+    const Count numCells = mesh_.numDomainCells();
 
     Scalar maxCourant = S(0.0);
     Scalar sumCourant = S(0.0);
@@ -612,6 +612,6 @@ MomentumTransport::computeCourant() const noexcept
     return
     {
         globalMax(maxCourant),
-        globalSum(sumCourant) / S(std::max<Count>(1, totalOwnedCells_))
+        globalSum(sumCourant) / S(std::max<Count>(1, totalDomainCells_))
     };
 }

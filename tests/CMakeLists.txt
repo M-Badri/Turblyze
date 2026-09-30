@@ -77,6 +77,7 @@ add_executable(turblyze_mpi_tests
     mpi/Parallel/GlobalIndexParallelTests.cpp
     mpi/Parallel/HaloExchangeTests.cpp
     mpi/Parallel/ReduceConsistencyTests.cpp
+    mpi/Parallel/DecompositionTests.cpp
     mpi/Models/TurbulenceBehaviorTests.cpp
 )
 

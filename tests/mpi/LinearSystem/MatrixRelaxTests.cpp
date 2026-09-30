@@ -43,7 +43,7 @@ TEST_CASE("Matrix::relax applies the Patankar algebra", "[petsc]")
     matrix.diagonal()[0] = S(10.0);
     matrix.vectorB()[0] = S(0.0);
 
-    ScalarField phiPrev;
+    ScalarField phiPrev(box.mesh());
     phiPrev[0] = S(5.0);
 
     matrix.relax(S(0.7), phiPrev);
@@ -79,7 +79,7 @@ TEST_CASE("Matrix::relax with alpha = 1 is the identity", "[petsc]")
     matrix.diagonal()[0] = S(10.0);
     matrix.vectorB()[0] = S(3.0);
 
-    ScalarField phiPrev;
+    ScalarField phiPrev(box.mesh());
     phiPrev[0] = S(5.0);
 
     matrix.relax(S(1.0), phiPrev);

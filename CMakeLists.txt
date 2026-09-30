@@ -106,7 +106,7 @@ add_library(turblyze_core OBJECT
     src/Parallel/GlobalIndex.cpp
     src/Parallel/MeshDecomposer.cpp
     src/Parallel/MeshDistributor.cpp
-    src/Parallel/DecompositionChecker.cpp
+    src/Parallel/HaloExchange.cpp
     src/Solver/MomentumTransport.cpp
     src/Solver/Segregated.cpp
     src/Solver/SIMPLE.cpp

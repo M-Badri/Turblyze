@@ -52,7 +52,7 @@ namespace
 {
 
 /// Register the fixed-value / zero-gradient BCs of the 1D diffusion problem
-void registerDiffusionBoundaries(BoundaryConditions& bc, Mesh& mesh)
+void registerDiffusionBoundaries(BoundaryConditions& bc, const Mesh& mesh)
 {
     for (const BoundaryPatch& patch : mesh.patches())
     {
@@ -129,10 +129,10 @@ TEST_CASE("explicitJacobiUpdate reproduces the exact solution", "[petsc]")
     registerDiffusionBoundaries(bc, box.mesh());
 
     const LeastSquares gradScheme(box.mesh(), bc);
-    ScalarField phi;
-    const FaceFluxField gammaFace(S(1.0));
-    const ScalarField source;
-    const VectorField gradPhi;
+    ScalarField phi(box.mesh());
+    const FaceFluxField gammaFace(box.mesh(), S(1.0));
+    const ScalarField source(box.mesh());
+    const VectorField gradPhi(box.mesh());
 
     Matrix matrix(box.mesh(), bc);
     matrix.buildMatrix
@@ -142,18 +142,18 @@ TEST_CASE("explicitJacobiUpdate reproduces the exact solution", "[petsc]")
 
     // Seed the exact linear profile phi(x) = x, then sweep once. The sweep
     // reads the neighbour values, so the ghosts carry the profile too
-    ScalarField phiExact;
-    for (Index cellIdx = 0; cellIdx < box.mesh().numOwnedCells(); ++cellIdx)
+    ScalarField phiExact(box.mesh());
+    for (Index cellIdx = 0; cellIdx < box.mesh().numDomainCells(); ++cellIdx)
     {
         phiExact[cellIdx] = box.mesh().cells()[cellIdx].centroid().x();
     }
 
-    exchangeHalos<Scalar>(box.mesh(), {&phiExact});
+    Halo::exchange({&phiExact});
 
-    ScalarField phiNew;
+    ScalarField phiNew(box.mesh());
     matrix.explicitJacobiUpdate(phiExact, phiNew);
 
-    for (Index cellIdx = 0; cellIdx < box.mesh().numOwnedCells(); ++cellIdx)
+    for (Index cellIdx = 0; cellIdx < box.mesh().numDomainCells(); ++cellIdx)
     {
         REQUIRE_THAT
         (
@@ -174,10 +174,10 @@ TEST_CASE("setValues pins a cell through the solve", "[petsc]")
     registerDiffusionBoundaries(bc, box.mesh());
 
     const LeastSquares gradScheme(box.mesh(), bc);
-    ScalarField phi;
-    const FaceFluxField gammaFace(S(1.0));
-    const ScalarField source;
-    const VectorField gradPhi;
+    ScalarField phi(box.mesh());
+    const FaceFluxField gammaFace(box.mesh(), S(1.0));
+    const ScalarField source(box.mesh());
+    const VectorField gradPhi(box.mesh());
 
     Matrix matrix(box.mesh(), bc);
     matrix.buildMatrix
@@ -195,12 +195,12 @@ TEST_CASE("setValues pins a cell through the solve", "[petsc]")
 
     // The neighbour rank must see the constraint on its ghost copy, exactly
     // as kOmegaSST exchanges its wall-cell fraction and value
-    ScalarField ghostFractions;
-    ScalarField ghostValues;
+    ScalarField ghostFractions(box.mesh());
+    ScalarField ghostValues(box.mesh());
     ghostFractions[fixedCell] = S(1.0);
     ghostValues[fixedCell] = fixedValue;
 
-    exchangeHalos<Scalar>(box.mesh(), {&ghostFractions, &ghostValues});
+    Halo::exchange({&ghostFractions, &ghostValues});
 
     matrix.setValues
     (
@@ -212,8 +212,8 @@ TEST_CASE("setValues pins a cell through the solve", "[petsc]")
     );
     matrix.assemble();
 
-    ScalarField solution;
-    std::span<Scalar> x(solution.data(), box.mesh().numOwnedCells());
+    ScalarField solution(box.mesh());
+    std::span<Scalar> x(solution.data(), box.mesh().numDomainCells());
 
     const auto solver = LinearSolver::create
     (

@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 <h1 align="center">Turblyze</h1>
 <p align="center">
   <a href="https://github.com/mohamed-i-mousa/Turblyze/actions/workflows/ci.yml"><img src="https://github.com/mohamed-i-mousa/Turblyze/actions/workflows/ci.yml/badge.svg" alt="CI Build & Test"></a>
+  <a href="https://www.codefactor.io/repository/github/mohamed-i-mousa/turblyze"><img src="https://www.codefactor.io/repository/github/mohamed-i-mousa/turblyze/badge" alt="CodeFactor"></a>
   <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows%20(WSL2)-lightgrey.svg" alt="Platforms">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0"></a>
 </p>
@@ -16,7 +17,7 @@ SPDX-License-Identifier: Apache-2.0
 
 <p align="center">
   <a href="validation/cylinder/animation/cylinderVortexShedding.mp4">
-    <img src="docs/cylinderVortexShedding.gif" alt="Turblyze: 2D Cylinder Vortex Shedding (Re ≈ 150)" width="100%">
+    <img src="validation/cylinder/animation/cylinderVortexShedding.gif" alt="Turblyze: 2D Cylinder Vortex Shedding (Re ≈ 150)" width="100%">
   </a>
 </p>
 <p align="center">

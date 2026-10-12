@@ -1,0 +1,14 @@
+Aerodynamic forces
+Patch          : ahmed_body
+Drag direction : (1.000000, 0.000000, 0.000000)
+Lift direction : (0.000000, 0.000000, 1.000000)
+Reference U    : (40.000000, 0.000000, 0.000000)
+
+Force               Pressure        Friction           Total
+Drag [N]        3.051446e+01    4.979027e+00    3.549349e+01
+Lift [N]        3.982172e+01    3.603365e-02    3.985775e+01
+
+Force coefficients (dimensionless), referenceArea = 1.150320e-01
+Coeff               Pressure        Friction           Total
+Cd              2.706830e-01    4.416718e-02    3.148502e-01
+Cl              3.532443e-01    3.196417e-04    3.535640e-01

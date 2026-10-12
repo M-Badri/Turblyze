@@ -1,0 +1,353 @@
+// ****************************************************************************
+// SPDX-FileCopyrightText: 2025-2026 Mohamed Mousa
+// SPDX-License-Identifier: Apache-2.0
+// ****************************************************************************
+
+// ============================================================================
+// Mesh Configuration
+// ============================================================================
+mesh
+{
+    file            ../inputFiles/ahmedBody.msh;
+    checkQuality    true;
+}
+
+// ============================================================================
+// Physical Properties (Air: nu = 1.5e-5 m^2/s)
+// ============================================================================
+physicalProperties
+{
+    rho             1.225;          // Density [kg/m^3]
+    mu              1.8375e-5;      // Dynamic viscosity [Pa.s] (nu = mu/rho = 1.5e-5)
+}
+
+// ============================================================================
+// Initial Conditions
+// ============================================================================
+initialConditions
+{
+    type            potentialFlow;
+    U               (40 0 0);       // Freestream velocity [m/s]
+    p               0;              // Pressure [Pa]
+    k               0.24;           // Turbulent kinetic energy [m^2/s^2]
+    omega           1.78;           // Specific dissipation rate [1/s]
+}
+
+// ============================================================================
+// Boundary Conditions
+// ============================================================================
+boundaryConditions
+{
+    U
+    {
+        inlet
+        {
+            type        fixedValue;
+            value       (40 0 0);
+        }
+
+        outlet
+        {
+            type        zeroGradient;
+        }
+
+        lowerWall
+        {
+            type        symmetry;
+        }
+
+        ahmed_body
+        {
+            type        noSlip;     // Car body wall
+        }
+
+        side_ymin
+        {
+            type        noSlip;
+        }
+
+        side_ymax
+        {
+            type        noSlip;
+        }
+
+        upperWall
+        {
+            type        noSlip;
+        }
+    }
+
+    p
+    {
+        inlet
+        {
+            type        zeroGradient;
+        }
+
+        outlet
+        {
+            type        fixedValue;
+            value       0;
+        }
+
+        lowerWall
+        {
+            type        symmetry;
+        }
+
+        ahmed_body
+        {
+            type        zeroGradient;
+        }
+
+        side_ymin
+        {
+            type        zeroGradient;
+        }
+
+        side_ymax
+        {
+            type        zeroGradient;
+        }
+
+        upperWall
+        {
+            type        zeroGradient;
+        }
+    }
+
+    k
+    {
+        inlet
+        {
+            type        fixedValue;
+            value       0.24;
+        }
+
+        outlet
+        {
+            type        zeroGradient;
+        }
+
+        lowerWall
+        {
+            type        symmetry;
+        }
+
+        ahmed_body
+        {
+            type        kWallFunction;
+        }
+
+        side_ymin
+        {
+            type        kWallFunction;
+        }
+
+        side_ymax
+        {
+            type        kWallFunction;
+        }
+
+        upperWall
+        {
+            type        kWallFunction;
+        }
+    }
+
+    omega
+    {
+        inlet
+        {
+            type        fixedValue;
+            value       1.78;
+        }
+
+        outlet
+        {
+            type        zeroGradient;
+        }
+
+        lowerWall
+        {
+            type        symmetry;
+        }
+
+        ahmed_body
+        {
+            type        omegaWallFunction;
+        }
+
+        side_ymin
+        {
+            type        omegaWallFunction;
+        }
+
+        side_ymax
+        {
+            type        omegaWallFunction;
+        }
+
+        upperWall
+        {
+            type        omegaWallFunction;
+        }
+    }
+
+    nut
+    {
+        inlet
+        {
+            type        zeroGradient;
+        }
+
+        outlet
+        {
+            type        zeroGradient;
+        }
+
+        lowerWall
+        {
+            type        symmetry;
+        }
+
+        ahmed_body
+        {
+            type        nutWallFunction;
+        }
+
+        side_ymin
+        {
+            type        nutWallFunction;
+        }
+
+        side_ymax
+        {
+            type        nutWallFunction;
+        }
+
+        upperWall
+        {
+            type        nutWallFunction;
+        }
+    }
+}
+
+// ============================================================================
+// Velocity Coupling
+// ============================================================================
+velocityCoupling
+{
+    algorithm           SIMPLE;
+}
+
+// ============================================================================
+// Time Control (Steady-State)
+// ============================================================================
+time
+{
+    timeScheme          steadyState;
+}
+
+// ============================================================================
+// Numerical Schemes
+// ============================================================================
+numericalSchemes
+{
+    gradient            leastSquares;
+
+    convection
+    {
+        default         Upwind;
+        U               SecondOrderUpwind;
+        k               Upwind;
+        omega           Upwind;
+    }
+}
+
+// ============================================================================
+// SIMPLE Algorithm Settings
+// ============================================================================
+SIMPLE
+{
+    numIterations               500;
+    convergenceTolerance        1e-3;
+    nNonOrthogonalCorrectors    3;
+
+    relaxationFactors
+    {
+        U                   0.5;
+        p                   0.25;
+        k                   0.3;
+        omega               0.3;
+    }
+}
+
+// ============================================================================
+// Linear Solvers (PETSc)
+// ============================================================================
+linearSolvers
+{
+    U
+    {
+        solver          BiCGSTAB;
+        preconditioner  ILU;
+        tolerance       1e-5;
+        maxIter         100;
+    }
+
+    p
+    {
+        solver          PCG;
+        preconditioner  AMG;
+        tolerance       1e-5;
+        maxIter         100;
+    }
+
+    k
+    {
+        solver          BiCGSTAB;
+        preconditioner  ILU;
+        tolerance       1e-5;
+        maxIter         100;
+    }
+
+    omega
+    {
+        solver          BiCGSTAB;
+        preconditioner  ILU;
+        tolerance       1e-5;
+        maxIter         100;
+    }
+}
+
+// ============================================================================
+// Turbulence Modeling
+// ============================================================================
+turbulence
+{
+    model               kOmegaSST;
+    roughWall           false;
+}
+
+// ============================================================================
+// Aerodynamic Forces Integration
+// ============================================================================
+forces
+{
+    enabled             true;
+    patch               ahmed_body;
+    dragDirection       (1 0 0);
+    liftDirection       (0 0 1);
+    referenceVelocity   (40 0 0);
+    referenceArea       0.115032;       // Frontal area [m^2]
+}
+
+// ============================================================================
+// Output Configuration
+// ============================================================================
+output
+{
+    filename            ../outputFiles.nosync/ahmedBody.vtkhdf;
+    debug               false;
+}

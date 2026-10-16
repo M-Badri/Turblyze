@@ -14,11 +14,6 @@
  * ranks 0..r-1 (rank-major ordering). A GlobalIndex captures this rank's
  * slice of that ordering: offset() is the global index of local item 0,
  * and toGlobal() shifts any owned local index into global numbering.
- *
- * @class GlobalIndex
- * - Constructor combines the per-rank counts (collective at np > 1)
- * - toGlobal() maps owned local indices only; ghost indices belong to
- *   other ranks' slices and get their own lookup path (Phase 5)
  *****************************************************************************/
 
 #pragma once

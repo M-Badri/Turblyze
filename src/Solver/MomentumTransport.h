@@ -14,11 +14,6 @@
  * the convergence / Courant / residual evaluation, the velocity-gradient
  * reconstruction, and the solution fields. The parts that differ between
  * algorithms are reached through a virtual method.
- *
- * @class MomentumTransport
- * - Universal time control shared by steady and transient runs
- * - Runtime-selection factory (create / availableAlgorithms)
- * - Convergence and Courant-number reporting
  *****************************************************************************/
 
 #pragma once

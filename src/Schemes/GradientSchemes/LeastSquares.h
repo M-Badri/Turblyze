@@ -14,8 +14,6 @@
  * neighbor cells and boundary faces, using inverse distance squared weighting.
  * The per-cell inverse of the normal-equations matrix (AᵀA) is pre-computed
  * once at construction and cached in compact upper-triangular form.
- *
- * @class LeastSquares
  *****************************************************************************/
 
 #pragma once

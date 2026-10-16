@@ -19,8 +19,6 @@
  * path and each rank's owned cells form one piece (part) of a multi-piece
  * VTKHDF layout, written collectively via MPI-IO. Every method is
  * collective — all ranks must call it, with an identical field set.
- *
- * @class HDF5CellData
  *****************************************************************************/
 
 #pragma once

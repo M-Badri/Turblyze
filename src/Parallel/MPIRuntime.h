@@ -17,10 +17,6 @@
  * already initialized and attaches to it as a guest; PetscFinalize then
  * leaves MPI running, and the reverse destruction order in main()
  * guarantees this destructor's MPI_Finalize runs last.
- *
- * @class MPIRuntime
- * - Constructor runs MPI_Init, then Comm::init()
- * - Destructor runs MPI_Finalize
  *****************************************************************************/
 
 #pragma once

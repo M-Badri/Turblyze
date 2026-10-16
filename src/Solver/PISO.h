@@ -15,8 +15,6 @@
  * steps: the momentum equation is re-assembled with the current flux and
  * advanced explicitly (a single Jacobi sweep) before each pressure correction
  * PISO is transient-only and is run without under-relaxation (alpha = 1)
- *
- * @class PISO
  *****************************************************************************/
 
 #pragma once

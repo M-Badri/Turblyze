@@ -14,8 +14,6 @@
  * isTurbulent() reports false so the solver skips turbulence-specific source
  * terms and reporting. It computes laminar wall shear stress on demand and
  * never computes wall distance.
- *
- * @class Laminar
  *****************************************************************************/
 
 #pragma once

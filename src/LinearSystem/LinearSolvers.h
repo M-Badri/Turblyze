@@ -24,14 +24,6 @@
  * (momentum_, pressure_, k_, omega_), so an option targets one solver —
  * e.g. "-pressure_pc_type icc" swaps only the pressure preconditioner
  * without a rebuild; an unprefixed "-pc_type" matches no solver.
- *
- * @class LinearSolver
- * - Abstract base with virtual solve()
- * - Holds shared convergence configuration and cached solve diagnostics
- *
- * @class PetscLinearSolver
- * - Owns the KSP and the reusable solution Vec wrapper
- * - Implements the common solve workflow once
  *****************************************************************************/
 
 #pragma once

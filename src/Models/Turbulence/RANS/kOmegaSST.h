@@ -13,18 +13,6 @@
  * k-omega SST turbulence model developed by Menter. The model combines the
  * robustness of the k-omega model in the near-wall region with the freestream
  * independence of the k-epsilon model in the far field.
- *
- * @class kOmegaSST
- * The model solves two transport equations:
- * - Turbulent kinetic energy
- * - Specific dissipation rate
- *
- * Features:
- * - Automatic switching between k-omega and k-epsilon formulations
- * - Enhanced near-wall treatment with proper wall functions
- * - Wall distance calculation using iterative propagation approach
- * - Proper wall shear stress computation
- * - Production limiting for numerical stability
  *****************************************************************************/
 
 #pragma once

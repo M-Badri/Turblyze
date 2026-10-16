@@ -11,7 +11,7 @@ and `.cpp` files under `src/`.
 ## File Headers
 
 **Header files (.h)** open with the Turblyze identity banner, a `---` divider,
-then `@file`/`@brief`/`@details` and (for a class header) `@class`:
+then `@file`/`@brief`/`@details`:
 ```cpp
 /******************************************************************************
 
@@ -27,11 +27,6 @@ then `@file`/`@brief`/`@details` and (for a class header) `@class`:
  * @details This header defines the BoundaryPatch class, which represents a
  * set of faces on the domain boundary. A patch is identified by a name
  * (e.g., "inlet", "wall") and a geometric zone ID from the mesh file.
- *
- * @class BoundaryPatch
- * - Identification of boundary zones (name, ID, type)
- * - Topological range definitions (start face index, end face index)
- * - Helper methods for querying patch size and face validity
  *****************************************************************************/
 ```
 
@@ -54,7 +49,7 @@ Every file opens with the centred identity banner (the project name,
 `3D incompressible CFD solver`, a `Copyright (C) 2025-2026 Mohamed Mousa` line,
 and the machine-readable `SPDX-License-Identifier: Apache-2.0` on its own line)
 followed by a `---` divider before the Doxygen tags. `@file`, `@brief`,
-`@class`, `@details`, `@param`, `@return`, and `@note` are the complete set of
+`@details`, `@param`, `@return`, and `@note` are the complete set of
 Doxygen tags used in this codebase.
 
 ## Section Separators

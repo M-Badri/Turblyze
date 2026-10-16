@@ -20,10 +20,6 @@
  * its matching patch — both sides derive the order from the cut faces
  * sorted by their original (undecomposed) face index, so no index maps
  * ever cross the wire. Pure data, no MPI.
- *
- * @class ProcessorPatch
- * - Identity: this rank's neighbor across the cut
- * - Topology: local cut-face range, send-cell list, ghost-tail slice
  *****************************************************************************/
 
 #pragma once

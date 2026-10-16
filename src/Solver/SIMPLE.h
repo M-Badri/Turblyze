@@ -11,11 +11,7 @@
  *
  * @details SIMPLE (Semi-Implicit Method for Pressure-Linked Equations) is a
  * segregated pressure-correction algorithm. It inherits from MomentumTransport
- * and Segregated. its only contribution is the body of one outer iteration:
- * implicit momentum predictor, Rhie-Chow flux, pressure correction, and the
- * velocity, correction, and the velocity, flux, and pressure corrections
- *
- * @class SIMPLE
+ * and Segregated.
  *****************************************************************************/
 
 #pragma once

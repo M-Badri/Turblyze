@@ -15,11 +15,6 @@
  * as V/dt * (1.5 * phi^{n+1} - 2.0 * phi^n + 0.5 * phi^{n-1}). It adds
  * 1.5 * V/dt to the diagonal and V/dt * (2.0 * phi^n - 0.5 * phi^{n-1}) to the
  * source. On the first time step, it starts up using first-order implicit Euler.
- *
- * @class SecondOrderImplicit
- * - Three-time-level second-order backward implicit time integration
- * - Automatic first-order implicit Euler startup for the initial time step
- * - History tracking of phi^{n-1} through updateDdtPrevStep
  *****************************************************************************/
 
 #pragma once

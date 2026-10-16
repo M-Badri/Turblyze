@@ -21,8 +21,6 @@
  * piece of a multi-piece layout, written collectively via MPI-IO. Every
  * method is collective — all ranks must call it, with an identical field
  * set, even when a rank's boundary is empty.
- *
- * @class HDF5BoundaryData
  *****************************************************************************/
 
 #pragma once

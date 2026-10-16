@@ -11,15 +11,6 @@
  *
  * @details This header defines the CaseReader class, which parses the input
  * case file for solver configuration.
- *
- * @class CaseReader
- *
- * The CaseReader class provides:
- * - Parsing of the input file
- * - Support for scalar, vector, string, and boolean values
- * - Hierarchical access via dot notation (e.g., "SIMPLE.nIterations")
- * - Automatic type conversion with error handling
- * - Comment and whitespace handling
  *****************************************************************************/
 
 #pragma once

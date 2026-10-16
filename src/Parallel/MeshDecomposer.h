@@ -25,10 +25,6 @@
  * rank-major: rank r's cells follow all cells of ranks 0..r-1, in
  * original-mesh order within the rank. This class is serial and MPI-free
  * by design — MeshDistributor does the shipping.
- *
- * @class MeshDecomposer
- * - partition(): cell -> rank labels from METIS (all zeros for 1 part)
- * - decompose(): per-rank SubmeshData blocks, ready to distribute
  *****************************************************************************/
 
 #pragma once

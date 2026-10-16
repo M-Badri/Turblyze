@@ -15,8 +15,6 @@
  * velocity and face-flux corrections, and the momentum diagonal coefficients.
  * Concrete algorithms derive from it and implement only
  * outerIteration() and algorithmName()
- *
- * @class Segregated
  *****************************************************************************/
 
 #pragma once

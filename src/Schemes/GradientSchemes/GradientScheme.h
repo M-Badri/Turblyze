@@ -14,12 +14,6 @@
  * on unstructured finite volume meshes. The single scheme-specific operation,
  * the cell-centered gradient, is declared pure virtual so concrete schemes
  * (e.g. LeastSquares) can override it.
- *
- * @class GradientScheme
- * - Cell-centered gradient computation (pure virtual, scheme-specific)
- * - Face-centered gradient interpolation with orthogonal correction
- * - Cell-based gradient limiting (Barth-Jespersen)
- * - Distance-weighted averaging for internal face gradients
  *****************************************************************************/
 
 #pragma once

@@ -22,6 +22,7 @@
 #include "RuntimeSelection.h"
 #include "CaseConfiguration.h"
 #include "Uniform.h"
+#include "TaylorGreen.h"
 #include "PotentialFlow.h"
 
 // ***************************** Runtime Selection ****************************
@@ -44,6 +45,16 @@ std::unique_ptr<Initializer> Initializer::create
         );
     }
 
+    if (typeName == "taylorGreen")
+    {
+        return std::make_unique<Initialization::TaylorGreen>
+        (
+            config.taylorGreenU0,
+            config.taylorGreenL,
+            config.taylorGreenP0,
+            config.rho
+        );
+    }
 
     if (typeName == "potentialFlow")
     {
@@ -69,5 +80,5 @@ std::unique_ptr<Initializer> Initializer::create
 
 NameList Initializer::availableTypes()
 {
-    return {"Uniform", "potentialFlow"};
+    return {"Uniform", "taylorGreen", "potentialFlow"};
 }

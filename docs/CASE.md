@@ -119,6 +119,39 @@ initialConditions
 }
 ```
 
+#### B. taylorGreen
+Analytical 3D Taylor-Green vortex distribution evaluated at cell centroids:
+```cpp
+initialConditions
+{
+    type            taylorGreen;
+    U0              1.0;            // Optional: Velocity scale [m/s] (default: 1.0)
+    L               1.0;            // Optional: Length scale [m] (default: 1.0)
+    p0              0.0;            // Optional: Reference pressure [Pa] (default: 0.0)
+}
+```
+Velocity and pressure fields follow:
+$$\begin{aligned}
+u &= U_0 \sin(x/L) \cos(y/L) \cos(z/L) \\
+v &= -U_0 \cos(x/L) \sin(y/L) \cos(z/L) \\
+w &= 0 \\
+p &= p_0 + \frac{\rho U_0^2}{16} \left(\cos(2x/L) + \cos(2y/L)\right)\left(\cos(2z/L) + 2\right)
+\end{aligned}$$
+On an impermeable symmetry box $[0, \pi L]^3$, the normal velocity vanishes on all six faces ($\mathbf{U} \cdot \mathbf{n} = 0$), so the standard impermeable-box Taylor-Green benchmark can be run using symmetry boundary conditions on every boundary patch.
+
+#### C. potentialFlow
+Divergence-free, wall-tangent velocity and Bernoulli pressure initialization via Poisson projection:
+```cpp
+initialConditions
+{
+    type            potentialFlow;
+    U               (10 0 0);       // Required: Freestream velocity [m/s]
+    p               0;              // Required: Reference pressure [Pa]
+    nCorrectors     3;              // Optional: Non-orthogonal corrector passes (default: 3)
+}
+```
+Solves $\nabla^2 \phi = \nabla \cdot \mathbf{U}_\infty$ with wall-tangency boundary conditions $\mathbf{U} \cdot \mathbf{n} = 0$, corrects cell velocity $\mathbf{U} = \mathbf{U}_\infty - \nabla \phi$, and sets Bernoulli pressure $p = p_\infty + \frac{1}{2}\rho (U_\infty^2 - |\mathbf{U}|^2)$.
+
 **Notes**:
 - `type` is optional and defaults to `Uniform` for full backward compatibility.
 - `k` and `omega` are only used when `model` is not `Laminar`

@@ -562,6 +562,23 @@ CaseConfiguration loadConfiguration(const CaseReader& reader)
         config.initialVelocity = initialConditions.lookup<Vector>("U");
         config.initialPressure = initialConditions.lookup<Scalar>("p");
     }
+    else if (config.initializationType == "taylorGreen")
+    {
+        config.taylorGreenU0 =
+            initialConditions.lookupOrDefault<Scalar>("U0", S(1.0));
+        config.taylorGreenL =
+            initialConditions.lookupOrDefault<Scalar>("L", S(1.0));
+        config.taylorGreenP0 =
+            initialConditions.lookupOrDefault<Scalar>("p0", S(0.0));
+
+        if (config.taylorGreenL <= S(0.0))
+        {
+            FatalError("initialConditions.L must be positive.");
+        }
+
+        config.initialVelocity = Vector(config.taylorGreenU0, S(0.0), S(0.0));
+        config.initialPressure = config.taylorGreenP0;
+    }
     else if (config.initializationType == "potentialFlow")
     {
         config.initialVelocity = initialConditions.lookup<Vector>("U");

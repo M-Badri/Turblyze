@@ -111,6 +111,7 @@ add_library(turblyze_core OBJECT
     src/Solver/PISO.cpp
     src/Solver/Initialization/Initializer.cpp
     src/Solver/Initialization/Uniform.cpp
+    src/Solver/Initialization/TaylorGreen.cpp
     src/Solver/Initialization/PotentialFlow.cpp
     src/Models/Turbulence/TurbulenceModel.cpp
     src/Models/Turbulence/RANS/RANS.cpp

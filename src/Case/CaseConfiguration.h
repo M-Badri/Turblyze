@@ -133,6 +133,15 @@ struct CaseConfiguration
     /// Flow field initialization mode (default: "Uniform")
     Name initializationType = "Uniform";
 
+    /// Taylor-Green vortex velocity scale (default: 1.0)
+    Scalar taylorGreenU0 = S(1.0);
+
+    /// Taylor-Green vortex length scale (default: 1.0)
+    Scalar taylorGreenL = S(1.0);
+
+    /// Taylor-Green vortex reference pressure (default: 0.0)
+    Scalar taylorGreenP0 = S(0.0);
+
     /// Potential flow non-orthogonal corrector passes
     Count potentialFlowCorrectors = 3;
 

@@ -125,7 +125,7 @@ void GradientScheme::limitGradient
 
             if
             (
-                isVelocity 
+                isVelocity
              && bcManager_.boundaryType(f, Field::Ux).isSymmetry()
             )
             {
@@ -148,7 +148,9 @@ void GradientScheme::limitGradient
             if
             (
                 isVelocity
-             && bcManager_.boundaryType(f, Field::Ux).isSymmetry())
+             && f.isBoundary()
+             && bcManager_.boundaryType(f, Field::Ux).isSymmetry()
+            )
             {
                 continue;
             }

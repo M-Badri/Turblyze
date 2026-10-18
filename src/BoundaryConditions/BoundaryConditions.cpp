@@ -104,6 +104,28 @@ const BoundaryType& BoundaryConditions::boundaryType
 }
 
 
+const BoundaryType* BoundaryConditions::find
+(
+    const Name& patchName,
+    Field field
+) const noexcept
+{
+    const auto patchIt = boundaryConditions_.find(patchName);
+    if (patchIt == boundaryConditions_.end())
+    {
+        return nullptr;
+    }
+
+    const auto fieldIt = patchIt->second.find(field);
+    if (fieldIt == patchIt->second.end())
+    {
+        return nullptr;
+    }
+
+    return fieldIt->second.get();
+}
+
+
 Scalar BoundaryConditions::faceValue
 (
     const Face& face,
@@ -211,28 +233,6 @@ void BoundaryConditions::printSummary() const
 }
 
 // ****************************** Private Methods *****************************
-
-const BoundaryType* BoundaryConditions::find
-(
-    const Name& patchName,
-    Field field
-) const noexcept
-{
-    const auto patchIt = boundaryConditions_.find(patchName);
-    if (patchIt == boundaryConditions_.end())
-    {
-        return nullptr;
-    }
-
-    const auto fieldIt = patchIt->second.find(field);
-    if (fieldIt == patchIt->second.end())
-    {
-        return nullptr;
-    }
-
-    return fieldIt->second.get();
-}
-
 
 void BoundaryConditions::missing(const Name& patchName, Field field)
 {

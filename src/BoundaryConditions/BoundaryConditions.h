@@ -88,6 +88,13 @@ public:
         Field field
     ) const;
 
+    /// Boundary condition of a field on a patch, or nullptr if not set
+    [[nodiscard]] const BoundaryType* find
+    (
+        const Name& patchName,
+        Field field
+    ) const noexcept;
+
     /// Reconstructed boundary face value: phi_f = a * ownerValue + b
     [[nodiscard]] Scalar faceValue
     (
@@ -113,13 +120,6 @@ public:
 // ****************************** Private Methods *****************************
 
 private:
-
-    /// Boundary condition of a field on a patch, or nullptr if not set
-    [[nodiscard]] const BoundaryType* find
-    (
-        const Name& patchName,
-        Field field
-    ) const noexcept;
 
     /// Abort for a missing boundary condition
     [[noreturn]] static void missing(const Name& patchName, Field field);

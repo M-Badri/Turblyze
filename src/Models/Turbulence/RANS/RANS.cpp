@@ -28,7 +28,6 @@
 #include "Mesh.h"
 #include "BoundaryConditions.h"
 #include "Field.h"
-#include "HaloExchange.h"
 #include "Matrix.h"
 #include "Reduce.h"
 #include "LinearInterpolation.h"
@@ -67,7 +66,10 @@ RANS::RANS
     alphaK_{alphaK},
     alphaDissipation_{alphaDissipation},
     debug_{debug}
-{}
+{
+    wallDistanceConverged_ =
+        computeWallDistance(mesh_, bcManager_, wallDistance_);
+}
 
 RANS::~RANS() noexcept = default;
 
@@ -237,100 +239,6 @@ void RANS::cellToFaceDiffusion
         else
         {
             faceGamma[faceIdx] = interpolateToFace(mesh_, face, cellGamma);
-        }
-    }
-}
-
-
-void RANS::updateWallDistance()
-{
-    wallDistanceConverged_ = false;
-    wallDistance_.setAll(S(1e10));
-    nearestWallPoint_.setAll(Vector{S(1e15), S(1e15), S(1e15)});
-
-    // Seed wall-adjacent cells with the distance to each wall centroid
-    for (const auto& face : mesh_.faces())
-    {
-        if (!face.isBoundary()) continue;
-
-        const BoundaryPatch& patch = *face.patch();
-
-        if (patch.type() == PatchType::processor || !bcManager_.boundaryType(patch, Field::Ux).isWall())
-        {
-            continue;
-        }
-
-        const Index cellIdx = face.ownerCell();
-        const Vector cellCenter = mesh_.cells()[cellIdx].centroid();
-        const Vector faceCenter = face.centroid();
-        const Vector normal = face.normal();
-        const Vector cellToFace = faceCenter - cellCenter;
-        const Scalar dist = std::abs(dot(cellToFace, normal));
-
-        if (dist < wallDistance_[cellIdx])
-        {
-            wallDistance_[cellIdx] = dist;
-            nearestWallPoint_[cellIdx] = faceCenter;
-        }
-    }
-
-    // Iterative propagation
-    const Count maxIterations = 100;
-    const Scalar tolerance = smallValue;
-
-    for (Index iter = 0; iter < maxIterations; ++iter)
-    {
-        // The wave crosses the cuts one exchange per sweep
-        Halo::exchange({&wallDistance_});
-        Halo::exchange({&nearestWallPoint_});
-
-        Scalar maxChange = S(0.0);
-
-        for (const auto& face : mesh_.faces())
-        {
-            if (face.isBoundary()) continue;
-
-            const Index owner = face.ownerCell();
-            const Index neighbor = face.neighborCell().value();
-            const Vector ownerCenter = mesh_.cells()[owner].centroid();
-            const Vector neighborCenter = mesh_.cells()[neighbor].centroid();
-
-            // Try to improve owner using neighbor's nearest wall point
-            {
-                const Vector candidatePoint = nearestWallPoint_[neighbor];
-                const Scalar newDist =
-                    magnitude(ownerCenter - candidatePoint);
-
-                if (newDist < wallDistance_[owner])
-                {
-                    const Scalar change = wallDistance_[owner] - newDist;
-                    maxChange = std::max(maxChange, change);
-                    wallDistance_[owner] = newDist;
-                    nearestWallPoint_[owner] = candidatePoint;
-                }
-            }
-
-            // Try to improve neighbor using owner's nearest wall point
-            {
-                const Vector candidatePoint = nearestWallPoint_[owner];
-                const Scalar newDist =
-                    magnitude(neighborCenter - candidatePoint);
-
-                if (newDist < wallDistance_[neighbor])
-                {
-                    const Scalar change = wallDistance_[neighbor] - newDist;
-                    maxChange = std::max(maxChange, change);
-                    wallDistance_[neighbor] = newDist;
-                    nearestWallPoint_[neighbor] = candidatePoint;
-                }
-            }
-        }
-
-        // Every rank sweeps the same number of times or this deadlocks
-        if (globalMax(maxChange) < tolerance)
-        {
-            wallDistanceConverged_ = true;
-            break;
         }
     }
 }

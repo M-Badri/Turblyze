@@ -181,17 +181,32 @@ struct CaseConfiguration
     /// omega relaxation factor
     Scalar alphaOmega;
 
-    /// Turbulence model name (Laminar or kOmegaSST)
+    /// Turbulence model name (Laminar, kOmegaSST, or Smagorinsky)
     Name turbulenceModel;
 
     /// Turbulence intensity for calculated inlet/default values
-    Scalar turbulenceIntensity;
+    Scalar turbulenceIntensity = S(0.05);
 
     /// Hydraulic diameter for calculated inlet/default values
-    Scalar hydraulicDiameter;
+    Scalar hydraulicDiameter = S(0.01);
 
     /// Enable SST F3 rough-wall blending
-    bool roughWall;
+    bool roughWall = false;
+
+    /// Smagorinsky constant Cs (default: 0.165)
+    Scalar Cs = S(0.165);
+
+    /// Yoshizawa SGS kinetic energy constant Ck (default: 0.094)
+    Scalar Ck = S(0.094);
+
+    /// Enable Van Driest near-wall damping for LES
+    bool vanDriest = true;
+
+    /// Van Driest constant A+ (default: 26.0)
+    Scalar Aplus = S(26.0);
+
+    /// Von Karman constant kappa (default: 0.41)
+    Scalar kappa = S(0.41);
 
     /// Enable aerodynamic force calculation on a wall patch
     bool forcesEnabled;

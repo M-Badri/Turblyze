@@ -345,9 +345,6 @@ protected:
         FaceFluxField& faceGamma
     ) const;
 
-    /// Update wall distance field using mesh-wave coordinate propagation
-    void updateWallDistance();
-
     /// Compute y+ crossover via fixed-point iteration
     void updateYPlusLam(Scalar kappa, Scalar E);
 
@@ -481,9 +478,6 @@ private:
 
     /// Distance to nearest wall
     ScalarField wallDistance_{mesh_, S(1.0)};
-
-    /// Coordinates of the nearest wall point per cell (for mesh-wave)
-    VectorField nearestWallPoint_{mesh_};
 
     /// meshWave wall-distance loop convergence flag
     bool wallDistanceConverged_ = false;

@@ -116,6 +116,8 @@ add_library(turblyze_core OBJECT
     src/Models/Turbulence/TurbulenceModel.cpp
     src/Models/Turbulence/RANS/RANS.cpp
     src/Models/Turbulence/RANS/kOmegaSST.cpp
+    src/Models/Turbulence/LES/LES.cpp
+    src/Models/Turbulence/LES/Smagorinsky.cpp
     src/PostProcessing/VTK/HDF5Wrapper.cpp
     src/PostProcessing/VTK/HDF5CellData.cpp
     src/PostProcessing/VTK/HDF5BoundaryData.cpp
@@ -144,6 +146,7 @@ target_include_directories(turblyze_core PUBLIC
     src/Models/
     src/Models/Turbulence/
     src/Models/Turbulence/RANS/
+    src/Models/Turbulence/LES/
     src/Models/Turbulence/Laminar/
     src/Case/
     src/Application/

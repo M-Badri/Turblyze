@@ -185,4 +185,16 @@ public:
     {
         return {};
     }
+
+// ***************************** Protected Methods ****************************
+
+protected:
+
+    /// Compute distance to nearest wall using mesh-wave coordinate propagation
+    [[nodiscard]] static bool computeWallDistance
+    (
+        const Mesh& mesh,
+        const BoundaryConditions& bc,
+        ScalarField& wallDistance
+    );
 };

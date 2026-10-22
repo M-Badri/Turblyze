@@ -29,6 +29,7 @@
 #include "MomentumTransport.h"
 #include "TurbulenceModel.h"
 #include "Laminar.h"
+#include "LES.h"
 #include "CaseConfiguration.h"
 #include "ErrorHandler.h"
 #include "Logger.h"
@@ -164,7 +165,7 @@ void SolverSetup::configure
             "pressure_"
         );
 
-    if (!TurbulenceModel::isLaminar(config.turbulenceModel))
+    if (TurbulenceModel::isRANS(config.turbulenceModel))
     {
         modules.kSolver = makeLinearSolver(config.linearSolvers.k, "k_");
         modules.omegaSolver =
@@ -200,14 +201,41 @@ void SolverSetup::configure
                 config.debug
             );
     }
+    else if (TurbulenceModel::isLES(config.turbulenceModel))
+    {
+        modules.turbulenceModel =
+            LES::create
+            (
+                config.turbulenceModel,
+                mesh,
+                boundaryConditions,
+                config.mu / config.rho,
+                config.Cs,
+                config.Ck,
+                config.vanDriest,
+                config.Aplus,
+                config.kappa,
+                config.debug
+            );
+    }
     else
     {
         modules.turbulenceModel =
-            std::make_unique<Laminar>(mesh, boundaryConditions, config.mu / config.rho);
+            std::make_unique<Laminar>
+            (
+                mesh,
+                boundaryConditions,
+                config.mu / config.rho
+            );
     }
 
     const auto initializer =
-        Initializer::create(config, *modules.gradScheme, *modules.pressureSolver);
+        Initializer::create
+        (
+            config,
+            *modules.gradScheme,
+            *modules.pressureSolver
+        );
 
     modules.solver =
         MomentumTransport::create
@@ -247,7 +275,10 @@ void SolverSetup::logSetup
     const CaseConfiguration& config
 )
 {
-    Logger::sectionHeader(std::format("Initializing {} Solver", config.algorithm));
+    Logger::sectionHeader
+    (
+        std::format("Initializing {} Solver", config.algorithm)
+    );
 
     Logger::subsection("Flow initialization");
     Logger::keyValue("Mode", Name{config.initializationType});
@@ -264,7 +295,7 @@ void SolverSetup::logSetup
         "p",
         config.linearSolvers.pressure
     );
-    if (!TurbulenceModel::isLaminar(config.turbulenceModel))
+    if (TurbulenceModel::isRANS(config.turbulenceModel))
     {
         logLinearSolver("k", config.linearSolvers.k);
         logLinearSolver
@@ -288,7 +319,7 @@ void SolverSetup::logSetup
     );
     Logger::keyValue("Velocity relaxation", config.alphaU);
     Logger::keyValue("Pressure relaxation", config.alphaP);
-    if (!TurbulenceModel::isLaminar(config.turbulenceModel))
+    if (TurbulenceModel::isRANS(config.turbulenceModel))
     {
         Logger::keyValue("k relaxation", config.alphaK);
         Logger::keyValue("omega relaxation", config.alphaOmega);
@@ -322,7 +353,16 @@ void SolverSetup::logSetup
               : "meshWave hit iteration cap (results may be degraded)"
             }
         );
-        Logger::keyValue("Fields initialized", Message{"k, omega, nut"});
+        Logger::keyValue
+        (
+            "Fields initialized",
+            Message
+            {
+                TurbulenceModel::isLES(config.turbulenceModel)
+              ? "nut, k_sgs, delta"
+              : "k, omega, nut"
+            }
+        );
     }
 
     Logger::iterationFooter();

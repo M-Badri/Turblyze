@@ -72,7 +72,6 @@ kOmegaSST::kOmegaSST
     useF3_ = roughWall;
     // Compute yPlusLam and wall-function geometry
     updateYPlusLam(coeffs_.kappa, coeffs_.E);
-    updateWallDistance();
     initializeWallFunctionGeometry(bcManager(), Field::omega);
     wallCellOmega_.assign(wallCellIndices().size(), S(0.0));
 

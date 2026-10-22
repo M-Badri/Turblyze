@@ -31,6 +31,7 @@
 #include "TimeScheme.h"
 #include "TurbulenceModel.h"
 #include "kOmegaSST.h"
+#include "Smagorinsky.h"
 
 // ***************************** Internal Helpers *****************************
 
@@ -164,7 +165,7 @@ void readLinearSolvers
     config.linearSolvers.pressure =
         readSolverEntry(solvers, "p", config.linearSolvers.pressure);
 
-    if (!TurbulenceModel::isLaminar(config.turbulenceModel))
+    if (TurbulenceModel::isRANS(config.turbulenceModel))
     {
         config.linearSolvers.k =
             readSolverEntry(solvers, "k", config.linearSolvers.k);
@@ -601,36 +602,82 @@ CaseConfiguration loadConfiguration(const CaseReader& reader)
         "turbulence.model"
     );
 
-    config.turbulenceIntensity =
-        turbulence.lookupOrDefault<Scalar>
-        (
-            "turbulenceIntensity",
-            S(0.05)
-        );
-    config.hydraulicDiameter =
-        turbulence.lookupOrDefault<Scalar>
-        (
-            "hydraulicDiameter",
-            S(0.01)
-        );
-
-    if (config.turbulenceIntensity <= S(0.0))
-    {
-        FatalError("turbulence.turbulenceIntensity must be positive.");
-    }
-    if (config.hydraulicDiameter <= S(0.0))
-    {
-        FatalError("turbulence.hydraulicDiameter must be positive.");
-    }
-
-    config.roughWall =
-        turbulence.lookupOrDefault<bool>("roughWall", false);
-
     config.initialK = S(0.0);
     config.initialOmega = S(0.0);
 
-    if (!TurbulenceModel::isLaminar(config.turbulenceModel))
+    if (TurbulenceModel::isLES(config.turbulenceModel))
     {
+        config.Cs =
+            turbulence.lookupOrDefault<Scalar>
+            (
+                "Cs",
+                Smagorinsky::coeffs_.Cs
+            );
+        config.Ck =
+            turbulence.lookupOrDefault<Scalar>
+            (
+                "Ck",
+                Smagorinsky::coeffs_.Ck
+            );
+        config.vanDriest =
+            turbulence.lookupOrDefault<bool>("vanDriest", true);
+        config.Aplus =
+            turbulence.lookupOrDefault<Scalar>
+            (
+                "Aplus",
+                Smagorinsky::coeffs_.Aplus
+            );
+        config.kappa =
+            turbulence.lookupOrDefault<Scalar>
+            (
+                "kappa",
+                Smagorinsky::coeffs_.kappa
+            );
+
+        if (config.Cs <= S(0.0))
+        {
+            FatalError("turbulence.Cs must be positive.");
+        }
+        if (config.Ck <= S(0.0))
+        {
+            FatalError("turbulence.Ck must be positive.");
+        }
+        if (config.Aplus <= S(0.0))
+        {
+            FatalError("turbulence.Aplus must be positive.");
+        }
+        if (config.kappa <= S(0.0))
+        {
+            FatalError("turbulence.kappa must be positive.");
+        }
+    }
+    else if (TurbulenceModel::isRANS(config.turbulenceModel))
+    {
+        config.turbulenceIntensity =
+            turbulence.lookupOrDefault<Scalar>
+            (
+                "turbulenceIntensity",
+                S(0.05)
+            );
+        config.hydraulicDiameter =
+            turbulence.lookupOrDefault<Scalar>
+            (
+                "hydraulicDiameter",
+                S(0.01)
+            );
+
+        if (config.turbulenceIntensity <= S(0.0))
+        {
+            FatalError("turbulence.turbulenceIntensity must be positive.");
+        }
+        if (config.hydraulicDiameter <= S(0.0))
+        {
+            FatalError("turbulence.hydraulicDiameter must be positive.");
+        }
+
+        config.roughWall =
+            turbulence.lookupOrDefault<bool>("roughWall", false);
+
         const Scalar defaultK =
             kOmegaSST::inletK
             (

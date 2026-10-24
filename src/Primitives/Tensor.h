@@ -287,6 +287,28 @@ private:
     };
 }
 
+/// Inner (single-dot) product of two tensors: (A.B)_ij = A_ik B_kj
+[[nodiscard]] inline Tensor dot
+(
+    const Tensor& A,
+    const Tensor& B
+) noexcept
+{
+    return
+        Tensor
+        {
+            A.xx() * B.xx() + A.xy() * B.yx() + A.xz() * B.zx(),
+            A.xx() * B.xy() + A.xy() * B.yy() + A.xz() * B.zy(),
+            A.xx() * B.xz() + A.xy() * B.yz() + A.xz() * B.zz(),
+            A.yx() * B.xx() + A.yy() * B.yx() + A.yz() * B.zx(),
+            A.yx() * B.xy() + A.yy() * B.yy() + A.yz() * B.zy(),
+            A.yx() * B.xz() + A.yy() * B.yz() + A.yz() * B.zz(),
+            A.zx() * B.xx() + A.zy() * B.yx() + A.zz() * B.zx(),
+            A.zx() * B.xy() + A.zy() * B.yy() + A.zz() * B.zy(),
+            A.zx() * B.xz() + A.zy() * B.yz() + A.zz() * B.zz()
+        };
+}
+
 /// Double-dot product of two tensors: A:B = A_ij B_ij
 [[nodiscard]] inline Scalar doubleDot
 (

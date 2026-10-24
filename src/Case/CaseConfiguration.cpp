@@ -32,6 +32,7 @@
 #include "TurbulenceModel.h"
 #include "kOmegaSST.h"
 #include "Smagorinsky.h"
+#include "WALE.h"
 
 // ***************************** Internal Helpers *****************************
 
@@ -607,48 +608,67 @@ CaseConfiguration loadConfiguration(const CaseReader& reader)
 
     if (TurbulenceModel::isLES(config.turbulenceModel))
     {
-        config.Cs =
-            turbulence.lookupOrDefault<Scalar>
-            (
-                "Cs",
-                Smagorinsky::coeffs_.Cs
-            );
         config.Ck =
             turbulence.lookupOrDefault<Scalar>
             (
                 "Ck",
                 Smagorinsky::coeffs_.Ck
             );
-        config.vanDriest =
-            turbulence.lookupOrDefault<bool>("vanDriest", true);
-        config.Aplus =
-            turbulence.lookupOrDefault<Scalar>
-            (
-                "Aplus",
-                Smagorinsky::coeffs_.Aplus
-            );
-        config.kappa =
-            turbulence.lookupOrDefault<Scalar>
-            (
-                "kappa",
-                Smagorinsky::coeffs_.kappa
-            );
 
-        if (config.Cs <= S(0.0))
-        {
-            FatalError("turbulence.Cs must be positive.");
-        }
         if (config.Ck <= S(0.0))
         {
             FatalError("turbulence.Ck must be positive.");
         }
-        if (config.Aplus <= S(0.0))
+
+        if (config.turbulenceModel == "Smagorinsky")
         {
-            FatalError("turbulence.Aplus must be positive.");
+            config.Cs =
+                turbulence.lookupOrDefault<Scalar>
+                (
+                    "Cs",
+                    Smagorinsky::coeffs_.Cs
+                );
+            config.vanDriest =
+                turbulence.lookupOrDefault<bool>("vanDriest", true);
+            config.Aplus =
+                turbulence.lookupOrDefault<Scalar>
+                (
+                    "Aplus",
+                    Smagorinsky::coeffs_.Aplus
+                );
+            config.kappa =
+                turbulence.lookupOrDefault<Scalar>
+                (
+                    "kappa",
+                    Smagorinsky::coeffs_.kappa
+                );
+
+            if (config.Cs <= S(0.0))
+            {
+                FatalError("turbulence.Cs must be positive.");
+            }
+            if (config.Aplus <= S(0.0))
+            {
+                FatalError("turbulence.Aplus must be positive.");
+            }
+            if (config.kappa <= S(0.0))
+            {
+                FatalError("turbulence.kappa must be positive.");
+            }
         }
-        if (config.kappa <= S(0.0))
+        else if (config.turbulenceModel == "WALE")
         {
-            FatalError("turbulence.kappa must be positive.");
+            config.Cw =
+                turbulence.lookupOrDefault<Scalar>
+                (
+                    "Cw",
+                    WALE::coeffs_.Cw
+                );
+
+            if (config.Cw <= S(0.0))
+            {
+                FatalError("turbulence.Cw must be positive.");
+            }
         }
     }
     else if (TurbulenceModel::isRANS(config.turbulenceModel))

@@ -212,6 +212,7 @@ void SolverSetup::configure
                 config.mu / config.rho,
                 config.Cs,
                 config.Ck,
+                config.Cw,
                 config.vanDriest,
                 config.Aplus,
                 config.kappa,

@@ -37,7 +37,7 @@ SPDX-License-Identifier: Apache-2.0
 
 - **Boundary Conditions**: `fixedValue`, `zeroGradient`, `fixedGradient`, `noSlip` (velocity), wall functions (`kWallFunction`, `omegaWallFunction`, `nutWallFunction`), and `symmetry` planes
 
-- **Turbulence Modeling**: Laminar or k-omega SST model with wall functions
+- **Turbulence Modeling**: Laminar, k-omega SST RANS model with wall functions, or LES sub-grid scale models (Smagorinsky with Van Driest wall damping, WALE)
 
 - **Distributed-Memory Parallelism (MPI)**: Runtime METIS domain decomposition with ghost-cell halo exchange. The same binary runs serially or under `mpirun -np N ./Turblyze case`, with no case-file changes. Linear systems are solved with PETSc Krylov solvers.
 
@@ -212,7 +212,7 @@ The default `defaultCase` file contains:
 - **Time**: Transient simulation, implicit-Euler stepping (timeStep 0.1 s, totalTime 200 s, 1 outer corrector per step)
 - **Discretization**: Second-Order Upwind convection scheme for momentum and Upwind convection scheme for turbulence equations. Least-squares for gradients computation
 - **SIMPLE Parameters**: αU = 1.0, αp = 1.0, αk = 0.5, αω = 0.5, tolerance = 1e-3 (scaled residuals), max iterations = 500
-- **Turbulence**: `Laminar` (k-omega SST is available via `model kOmegaSST`)
+- **Turbulence**: `Laminar` (k-omega SST, Smagorinsky LES, and WALE LES are available via `model kOmegaSST`, `model Smagorinsky`, or `model WALE`)
 - **Output**: `../outputFiles.nosync/sphere.vtkhdf` (plus `sphere_boundary.vtkhdf`, and `sphere_forces.txt` when forces are enabled). The directory must already exist, the writers do not create it.
 
 ### Flow Physics
@@ -237,9 +237,9 @@ The default `defaultCase` file contains:
   (`<name>.vtkhdf`) and a boundary PolyData (`<name>_boundary.vtkhdf`)
 - **Fields Exported**:
   - Volume `.vtkhdf`: `pressure`, `velocityMagnitude`, vector `velocity`,
-    and, when `model` is not `Laminar`, `k`, `omega`, `nut`, `wallDistance`
+    plus `k`, `omega`, `nut`, `wallDistance` for `kOmegaSST`, or `nut`, `k_sgs`, `delta` for LES models (`Smagorinsky`, `WALE`)
   - Boundary `_boundary.vtkhdf` (e.g. `sphere_boundary.vtkhdf`): all boundary patches with integer `patchIdx`, `patchZoneIdx`, `patchTypeIdx`, and `isWall` metadata.
-    `wallShearStress` is included for all runs; `yPlus` is added only when `model` is not `Laminar`
+    `wallShearStress` is included for all runs; `yPlus` is added for RANS runs (`kOmegaSST`)
 - **Cell Encoding**: volume cells are written as `VTK_POLYHEDRON` to preserve
   Turblyze's face topology. This is more robust for mixed/polyhedral meshes,
   but some ParaView filters may run slower than with native
@@ -338,7 +338,7 @@ OpenFOAM convention:
 - **`src/Solver/`**: Pressure-velocity coupling (SIMPLE and PISO algorithms)
 - **`src/Models/`**: Physical models
   - **`src/Models/Turbulence/`**: Turbulence modeling
-    (`kOmegaSST.h/.cpp`)
+    (`TurbulenceModel.h/.cpp`, `Laminar/`, `RANS/`, `LES/`)
 - **`src/PostProcessing/`**: Derived fields and output orchestration
   (`PostProcess.h/.cpp`)
   - **`src/PostProcessing/VTK/`**: VTKHDF volume and boundary writers

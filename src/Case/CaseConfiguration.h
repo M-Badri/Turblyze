@@ -181,7 +181,7 @@ struct CaseConfiguration
     /// omega relaxation factor
     Scalar alphaOmega;
 
-    /// Turbulence model name (Laminar, kOmegaSST, or Smagorinsky)
+    /// Turbulence model name (Laminar, kOmegaSST, Smagorinsky, or WALE)
     Name turbulenceModel;
 
     /// Turbulence intensity for calculated inlet/default values
@@ -198,6 +198,9 @@ struct CaseConfiguration
 
     /// Yoshizawa SGS kinetic energy constant Ck (default: 0.094)
     Scalar Ck = S(0.094);
+
+    /// WALE model constant Cw (default: 0.325)
+    Scalar Cw = S(0.325);
 
     /// Enable Van Driest near-wall damping for LES
     bool vanDriest = true;

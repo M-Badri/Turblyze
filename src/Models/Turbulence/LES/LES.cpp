@@ -25,6 +25,7 @@
 #include "HaloExchange.h"
 #include "RuntimeSelection.h"
 #include "Smagorinsky.h"
+#include "WALE.h"
 
 // ************************* Special Member Functions *************************
 
@@ -56,6 +57,7 @@ std::unique_ptr<LES> LES::create
     Scalar nu,
     Scalar Cs,
     Scalar Ck,
+    Scalar Cw,
     bool vanDriest,
     Scalar Aplus,
     Scalar kappa,
@@ -78,6 +80,19 @@ std::unique_ptr<LES> LES::create
         );
     }
 
+    if (modelName == "WALE")
+    {
+        return std::make_unique<WALE>
+        (
+            mesh,
+            bc,
+            nu,
+            Cw,
+            Ck,
+            debug
+        );
+    }
+
     RuntimeSelection::unknownSelection
     (
         "LES model",
@@ -89,7 +104,7 @@ std::unique_ptr<LES> LES::create
 
 NameList LES::availableModels()
 {
-    return {"Smagorinsky"};
+    return {"Smagorinsky", "WALE"};
 }
 
 // ***************************** Turbulence Solve *****************************

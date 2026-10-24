@@ -1,0 +1,206 @@
+// ****************************************************************************
+// SPDX-FileCopyrightText: 2025-2026 Mohamed Mousa
+// SPDX-License-Identifier: Apache-2.0
+// ****************************************************************************
+
+// ============================================================================
+// Mesh Configuration
+// ============================================================================
+mesh
+{
+    file            ../inputFiles/taylorGreen128.msh;
+    checkQuality    true;
+}
+
+// ============================================================================
+// Physical Properties (Re = 1600 with U0 = 1.0, L = 1.0)
+// ============================================================================
+physicalProperties
+{
+    rho             1.0;
+    mu              0.000625;       // nu = 1/1600 = 6.25e-4 m^2/s
+}
+
+// ============================================================================
+// Initial Conditions
+// ============================================================================
+initialConditions
+{
+    type            taylorGreen;
+    U0              1.0;            // Characteristic velocity scale [m/s]
+    L               1.0;            // Length scale [m]
+    p0              0.0;            // Reference pressure [Pa]
+}
+
+// ============================================================================
+// Boundary Conditions
+// All 6 faces of the [0, pi*L]^3 box are exact symmetry mirror planes.
+// ============================================================================
+boundaryConditions
+{
+    U
+    {
+        xMin
+        {
+            type        symmetry;
+        }
+
+        xMax
+        {
+            type        symmetry;
+        }
+
+        yMin
+        {
+            type        symmetry;
+        }
+
+        yMax
+        {
+            type        symmetry;
+        }
+
+        zMin
+        {
+            type        symmetry;
+        }
+
+        zMax
+        {
+            type        symmetry;
+        }
+    }
+
+    p
+    {
+        xMin
+        {
+            type        symmetry;
+        }
+
+        xMax
+        {
+            type        symmetry;
+        }
+
+        yMin
+        {
+            type        symmetry;
+        }
+
+        yMax
+        {
+            type        symmetry;
+        }
+
+        zMin
+        {
+            type        symmetry;
+        }
+
+        zMax
+        {
+            type        symmetry;
+        }
+    }
+}
+
+// ============================================================================
+// Time Controls
+// ============================================================================
+time
+{
+    timeScheme          secondOrderImplicit;
+    timeStep            0.01;
+    totalTime           20.0;
+    writingIntervals    5;
+    nOuterCorrectors    1;
+}
+
+// ============================================================================
+// Numerical Schemes
+// ============================================================================
+numericalSchemes
+{
+    gradient        leastSquares;
+
+    convection
+    {
+        default     CentralDifference;
+        U           CentralDifference;
+    }
+}
+
+// ============================================================================
+// Velocity-Pressure Coupling
+// ============================================================================
+velocityCoupling
+{
+    algorithm       PISO;
+}
+
+PISO
+{
+    convergenceTolerance        1e-4;
+    nNonOrthogonalCorrectors    0;          // Orthogonal Cartesian mesh
+    nPrimeCorrectors            2;
+
+    relaxationFactors
+    {
+        U           1.0;
+        p           1.0;
+    }
+}
+
+// ============================================================================
+// Linear Solvers
+// ============================================================================
+linearSolvers
+{
+    U
+    {
+        solver          BiCGSTAB;
+        preconditioner  Jacobi;
+        tolerance       1e-8;
+        maxIter         1000;
+    }
+
+    p
+    {
+        solver          PCG;
+        preconditioner  Jacobi;
+        tolerance       1e-6;
+        maxIter         1000;
+    }
+}
+
+// ============================================================================
+// Turbulence Modeling
+// ============================================================================
+turbulence
+{
+    model               WALE;
+    Cw                  0.325;
+    Ck                  0.094;
+}
+
+// ============================================================================
+// Aerodynamic Forces
+// ============================================================================
+forces
+{
+    enabled             false;
+}
+
+// ============================================================================
+// Output Configuration
+// ============================================================================
+output
+{
+    filename        ../outputFiles.nosync/taylorGreen.vtkhdf;
+    debug           false;
+}
+
+// ============================================================================
+// End of Case Setup
+// ============================================================================

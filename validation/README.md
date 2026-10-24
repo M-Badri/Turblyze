@@ -19,6 +19,9 @@ and figures).
 - **`cylinder/`** : transient von Kármán vortex shedding behind a
   cylinder, exercising the transient (implicit-Euler time scheme +
   PISO pressure-velocity coupling) and the symmetry-plane boundary condition.
+- **`LES/TaylorGreen/`** : 3D transition and turbulent decay in an impermeable
+  symmetry box $[0, \pi L]^3$, verifying LES sub-grid models (WALE and Smagorinsky)
+  against spectral DNS.
 
 See each folder's `README.md` for the figure and results, and its `runGuide.md`
 to reproduce.
